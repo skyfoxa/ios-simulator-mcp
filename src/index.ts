@@ -112,7 +112,12 @@ server.tool("get_booted_sim_id", {}, async () => {
 server.tool(
   "take_screenshot",
   {
-    deviceId: z.string().describe("The UUID of the simulator to screenshot"),
+    deviceId: z
+      .string()
+      .optional()
+      .describe(
+        "The UUID of the simulator to screenshot (will use booted simulator if not provided)"
+      ),
     name: z
       .string()
       .optional()
@@ -124,6 +129,29 @@ server.tool(
   },
   async ({ deviceId, name, outputPath }) => {
     try {
+      // If deviceId not provided, get the currently booted simulator
+      let actualDeviceId = deviceId;
+      if (!actualDeviceId) {
+        const { stdout } = await execAsync("xcrun simctl list devices");
+
+        // Parse the output to find booted device
+        const lines = stdout.split("\n");
+        for (const line of lines) {
+          if (line.includes("Booted")) {
+            // Extract the UUID - it's inside parentheses
+            const match = line.match(/\(([-0-9A-F]+)\)/);
+            if (match) {
+              actualDeviceId = match[1];
+              break;
+            }
+          }
+        }
+
+        if (!actualDeviceId) {
+          throw new Error("No booted simulator found and no deviceId provided");
+        }
+      }
+
       // Generate timestamp for name if not provided
       const screenshotName = name || `screenshot-${Date.now()}`;
 
@@ -139,7 +167,9 @@ server.tool(
       }
 
       // Take the screenshot
-      await execAsync(`xcrun simctl io ${deviceId} screenshot "${actualPath}"`);
+      await execAsync(
+        `xcrun simctl io ${actualDeviceId} screenshot "${actualPath}"`
+      );
 
       // Get absolute path
       const absolutePath = path.resolve(actualPath);
