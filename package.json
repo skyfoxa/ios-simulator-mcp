@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "MCP tool for interacting with iOS simulators",
   "bin": {
-    "ios-sim-mcp": "./dist/ .js"
+    "ios-sim-mcp": "./build/index.js"
   },
   "files": [
     "build"
