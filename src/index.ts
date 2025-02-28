@@ -103,25 +103,6 @@ server.tool("get_booted_sim_id", {}, async () => {
 });
 
 /**
- * Get a list of all available iOS simulators
- * @returns A formatted list of all simulators
- */
-server.tool("get_all_simulators", {}, async () => {
-  try {
-    const { stdout } = await execAsync("xcrun simctl list devices");
-    return {
-      content: [{ type: "text", text: stdout }],
-    };
-  } catch (error: any) {
-    return {
-      content: [
-        { type: "text", text: `Error: ${error.message || String(error)}` },
-      ],
-    };
-  }
-});
-
-/**
  * Take a screenshot of a booted iOS simulator
  * @param deviceId The UUID of the simulator to screenshot
  * @param name Name for the screenshot (used for resource access)
@@ -189,83 +170,6 @@ server.tool(
           {
             type: "text",
             text: `Error taking screenshot: ${error.message || String(error)}`,
-          },
-        ],
-      };
-    }
-  }
-);
-
-/**
- * Boot a specific simulator by ID
- * @param deviceId The UUID of the simulator to boot
- * @returns Result of the boot operation
- */
-server.tool(
-  "boot_simulator",
-  { deviceId: z.string().describe("The UUID of the simulator to boot") },
-  async ({ deviceId }) => {
-    try {
-      const { stdout } = await execAsync(`xcrun simctl boot ${deviceId}`);
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Successfully booted simulator with ID: ${deviceId}\n${stdout}`,
-          },
-        ],
-      };
-    } catch (error: any) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error booting simulator: ${error.message || String(error)}`,
-          },
-        ],
-      };
-    }
-  }
-);
-
-/**
- * Delete a screenshot from the resource directory
- * @param name Name of the screenshot to delete
- * @returns Result of the deletion operation
- */
-server.tool(
-  "delete_screenshot",
-  { name: z.string().describe("Name of the screenshot to delete") },
-  async ({ name }) => {
-    try {
-      if (screenshots.has(name)) {
-        screenshots.delete(name);
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Successfully deleted screenshot: ${name}`,
-            },
-          ],
-        };
-      } else {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Screenshot not found: ${name}`,
-            },
-          ],
-        };
-      }
-    } catch (error: any) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error deleting screenshot: ${
-              error.message || String(error)
-            }`,
           },
         ],
       };
