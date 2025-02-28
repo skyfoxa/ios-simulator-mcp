@@ -5,6 +5,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { exec } from "child_process";
 import { promisify } from "util";
 import { z } from "zod";
+import path from "path";
+import fs from "fs";
 
 // Convert exec to use promises
 const execAsync = promisify(exec);
@@ -74,6 +76,59 @@ server.tool("get_all_simulators", {}, async () => {
     };
   }
 });
+
+/**
+ * Take a screenshot of a booted iOS simulator
+ * @param deviceId The UUID of the simulator to screenshot
+ * @param outputPath Optional path where to save the screenshot (default: timestamp-based filename in current directory)
+ * @returns Path to the saved screenshot or error message
+ */
+server.tool(
+  "take_screenshot",
+  {
+    deviceId: z.string().describe("The UUID of the simulator to screenshot"),
+    outputPath: z
+      .string()
+      .optional()
+      .describe("Optional path where to save the screenshot"),
+  },
+  async ({ deviceId, outputPath }) => {
+    try {
+      // Generate default filename with timestamp if no path provided
+      const actualPath = outputPath || `simulator-screenshot-${Date.now()}.png`;
+
+      // Ensure the directory exists
+      const directory = path.dirname(actualPath);
+      if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+      }
+
+      // Take the screenshot
+      await execAsync(`xcrun simctl io ${deviceId} screenshot "${actualPath}"`);
+
+      // Get absolute path
+      const absolutePath = path.resolve(actualPath);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Screenshot saved to: ${absolutePath}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error taking screenshot: ${error.message || String(error)}`,
+          },
+        ],
+      };
+    }
+  }
+);
 
 /**
  * Boot a specific simulator by ID
