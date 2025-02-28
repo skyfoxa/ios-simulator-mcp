@@ -11,10 +11,54 @@ import fs from "fs";
 // Convert exec to use promises
 const execAsync = promisify(exec);
 
+// Configure screenshot resource directory
+const SCREENSHOT_RESOURCE_DIR =
+  process.env.SCREENSHOT_RESOURCE_DIR ||
+  path.join(process.env.HOME || "", "Downloads", "ios-simulator-screenshots");
+
+// Create the screenshot directory if it doesn't exist
+if (!fs.existsSync(SCREENSHOT_RESOURCE_DIR)) {
+  fs.mkdirSync(SCREENSHOT_RESOURCE_DIR, { recursive: true });
+}
+
+// Store screenshots in memory
+const screenshots = new Map<string, string>();
+
 // Initialize FastMCP server
 const server = new McpServer({
   name: "ios-simulator",
   version: "1.0.0",
+});
+
+// Register new screenshots as they're created
+function registerScreenshotResource(name: string, data: string) {
+  screenshots.set(name, data);
+
+  // Register a resource for this screenshot if it doesn't exist already
+  server.resource(`screenshot-${name}`, `screenshot://${name}`, async (uri) => {
+    return {
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: "image/png",
+          blob: data,
+        },
+      ],
+    };
+  });
+}
+
+// Add a resource to list available screenshots
+server.resource("screenshot-list", "screenshot://list", async (uri) => {
+  return {
+    contents: [
+      {
+        uri: uri.href,
+        mimeType: "text/plain",
+        text: Array.from(screenshots.keys()).join("\n"),
+      },
+    ],
+  };
 });
 
 /**
@@ -80,22 +124,32 @@ server.tool("get_all_simulators", {}, async () => {
 /**
  * Take a screenshot of a booted iOS simulator
  * @param deviceId The UUID of the simulator to screenshot
- * @param outputPath Optional path where to save the screenshot (default: timestamp-based filename in current directory)
+ * @param name Name for the screenshot (used for resource access)
+ * @param outputPath Optional path where to save the screenshot (default: timestamp-based filename in the screenshot resource directory)
  * @returns Path to the saved screenshot or error message
  */
 server.tool(
   "take_screenshot",
   {
     deviceId: z.string().describe("The UUID of the simulator to screenshot"),
+    name: z
+      .string()
+      .optional()
+      .describe("Name for the screenshot to be accessed as a resource"),
     outputPath: z
       .string()
       .optional()
       .describe("Optional path where to save the screenshot"),
   },
-  async ({ deviceId, outputPath }) => {
+  async ({ deviceId, name, outputPath }) => {
     try {
+      // Generate timestamp for name if not provided
+      const screenshotName = name || `screenshot-${Date.now()}`;
+
       // Generate default filename with timestamp if no path provided
-      const actualPath = outputPath || `simulator-screenshot-${Date.now()}.png`;
+      const actualPath =
+        outputPath ||
+        path.join(SCREENSHOT_RESOURCE_DIR, `${screenshotName}.png`);
 
       // Ensure the directory exists
       const directory = path.dirname(actualPath);
@@ -109,11 +163,23 @@ server.tool(
       // Get absolute path
       const absolutePath = path.resolve(actualPath);
 
+      // Read the file and store it in memory as base64
+      const imageBuffer = fs.readFileSync(actualPath);
+      const base64Data = imageBuffer.toString("base64");
+
+      // Register as a resource
+      registerScreenshotResource(screenshotName, base64Data);
+
       return {
         content: [
           {
             type: "text",
-            text: `Screenshot saved to: ${absolutePath}`,
+            text: `Screenshot saved to: ${absolutePath}\nAccessible as resource: screenshot://${screenshotName}`,
+          },
+          {
+            type: "image",
+            data: base64Data,
+            mimeType: "image/png",
           },
         ],
       };
@@ -162,6 +228,51 @@ server.tool(
   }
 );
 
+/**
+ * Delete a screenshot from the resource directory
+ * @param name Name of the screenshot to delete
+ * @returns Result of the deletion operation
+ */
+server.tool(
+  "delete_screenshot",
+  { name: z.string().describe("Name of the screenshot to delete") },
+  async ({ name }) => {
+    try {
+      if (screenshots.has(name)) {
+        screenshots.delete(name);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Successfully deleted screenshot: ${name}`,
+            },
+          ],
+        };
+      } else {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Screenshot not found: ${name}`,
+            },
+          ],
+        };
+      }
+    } catch (error: any) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error deleting screenshot: ${
+              error.message || String(error)
+            }`,
+          },
+        ],
+      };
+    }
+  }
+);
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
@@ -170,6 +281,6 @@ async function runServer() {
 runServer().catch(console.error);
 
 process.stdin.on("close", () => {
-  console.error("Puppeteer MCP Server closed");
+  console.error("iOS Simulator MCP Server closed");
   server.close();
 });
