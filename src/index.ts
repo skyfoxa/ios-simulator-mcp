@@ -215,6 +215,6 @@ async function runServer() {
 runServer().catch(console.error);
 
 process.stdin.on("close", () => {
-  console.error("iOS Simulator MCP Server closed");
+  console.log("iOS Simulator MCP Server closed");
   server.close();
 });
