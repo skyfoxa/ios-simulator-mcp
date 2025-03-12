@@ -48,6 +48,20 @@ function registerScreenshotResource(name: string, data: string) {
   });
 }
 
+function toError(input: unknown): Error {
+  if (input instanceof Error) return input;
+
+  if (
+    typeof input === "object" &&
+    input &&
+    "message" in input &&
+    typeof input.message === "string"
+  )
+    return new Error(input.message);
+
+  return new Error(JSON.stringify(input));
+}
+
 // Add a resource to list available screenshots
 server.resource("screenshot-list", "screenshot://list", async (uri) => {
   return {
@@ -102,6 +116,34 @@ server.tool("get_booted_sim_id", {}, async () => {
   }
 });
 
+async function getBootedDeviceId(
+  deviceId: string | undefined
+): Promise<string> {
+  // If deviceId not provided, get the currently booted simulator
+  let actualDeviceId = deviceId;
+  if (!actualDeviceId) {
+    const { stdout } = await execAsync("xcrun simctl list devices");
+
+    // Parse the output to find booted device
+    const lines = stdout.split("\n");
+    for (const line of lines) {
+      if (line.includes("Booted")) {
+        // Extract the UUID - it's inside parentheses
+        const match = line.match(/\(([-0-9A-F]+)\)/);
+        if (match) {
+          actualDeviceId = match[1];
+          break;
+        }
+      }
+    }
+
+    if (!actualDeviceId) {
+      throw new Error("No booted simulator found and no deviceId provided");
+    }
+  }
+  return actualDeviceId;
+}
+
 /**
  * Take a screenshot of a booted iOS simulator
  * @param deviceId The UUID of the simulator to screenshot
@@ -129,29 +171,7 @@ server.tool(
   },
   async ({ deviceId, name, outputPath }) => {
     try {
-      // If deviceId not provided, get the currently booted simulator
-      let actualDeviceId = deviceId;
-      if (!actualDeviceId) {
-        const { stdout } = await execAsync("xcrun simctl list devices");
-
-        // Parse the output to find booted device
-        const lines = stdout.split("\n");
-        for (const line of lines) {
-          if (line.includes("Booted")) {
-            // Extract the UUID - it's inside parentheses
-            const match = line.match(/\(([-0-9A-F]+)\)/);
-            if (match) {
-              actualDeviceId = match[1];
-              break;
-            }
-          }
-        }
-
-        if (!actualDeviceId) {
-          throw new Error("No booted simulator found and no deviceId provided");
-        }
-      }
-
+      const actualDeviceId = getBootedDeviceId(deviceId);
       // Generate timestamp for name if not provided
       const screenshotName = name || `screenshot-${Date.now()}`;
 
@@ -199,7 +219,40 @@ server.tool(
         content: [
           {
             type: "text",
-            text: `Error taking screenshot: ${error.message || String(error)}`,
+            text: `Error taking screenshot: ${toError(error).message}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
+  "ui-describe-all",
+  "Describes Accessibility Information for the entire screen",
+  {
+    udid: z
+      .string()
+      .optional()
+      .describe("Udid of target, can also be set with the IDB_UDID env var"),
+  },
+  async ({ udid }) => {
+    try {
+      const actualUdid = await getBootedDeviceId(udid);
+
+      const { stdout } = await execAsync(
+        `idb ui describe-all --udid ${actualUdid} --json --nested`
+      );
+
+      return {
+        content: [{ type: "text", text: stdout }],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error describing all of the ui: ${toError(error).message}`,
           },
         ],
       };
