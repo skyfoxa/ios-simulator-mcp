@@ -260,6 +260,44 @@ server.tool(
   }
 );
 
+server.tool(
+  "ui-tap",
+  "Tap On the Screen",
+  {
+    duration: z.string().optional().describe("Press duration"),
+    udid: z
+      .string()
+      .optional()
+      .describe("Udid of target, can also be set with the IDB_UDID env var"),
+    x: z.number().describe("The x-coordinate"),
+    y: z.number().describe("The x-coordinate"),
+  },
+  async ({ duration, udid, x, y }) => {
+    try {
+      const actualUdid = await getBootedDeviceId(udid);
+      const durationArg = duration ? `--duration ${duration}` : "";
+      const { stderr } = await execAsync(
+        `idb ui tap --udid ${actualUdid} ${durationArg} ${x} ${y}  --json`
+      );
+
+      if (stderr) throw new Error(stderr);
+
+      return {
+        content: [{ type: "text", text: "Tapped successfully" }],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error describing all of the ui: ${toError(error).message}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
