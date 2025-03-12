@@ -75,47 +75,6 @@ server.resource("screenshot-list", "screenshot://list", async (uri) => {
   };
 });
 
-/**
- * Get the ID of the currently booted iOS simulator
- * @returns The details and UUID of the booted simulator, or a message if none is booted
- */
-server.tool("get_booted_sim_id", {}, async () => {
-  try {
-    const { stdout } = await execAsync("xcrun simctl list devices");
-
-    // Parse the output to find booted device
-    const lines = stdout.split("\n");
-    for (const line of lines) {
-      if (line.includes("Booted")) {
-        // Extract the UUID - it's inside parentheses
-        const match = line.match(/\(([-0-9A-F]+)\)/);
-        if (match) {
-          const deviceId = match[1];
-          const deviceName = line.split("(")[0].trim();
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Booted Simulator: ${deviceName}\nUUID: ${deviceId}`,
-              },
-            ],
-          };
-        }
-      }
-    }
-
-    return {
-      content: [{ type: "text", text: "No booted simulator found." }],
-    };
-  } catch (error: any) {
-    return {
-      content: [
-        { type: "text", text: `Error: ${error.message || String(error)}` },
-      ],
-    };
-  }
-});
-
 async function getBootedDevice() {
   const { stdout, stderr } = await execAsync("xcrun simctl list devices");
 
@@ -155,6 +114,31 @@ async function getBootedDeviceId(
   }
   return actualDeviceId;
 }
+
+/**
+ * Get the ID of the currently booted iOS simulator
+ * @returns The details and UUID of the booted simulator.
+ */
+server.tool("get_booted_sim_id", {}, async () => {
+  try {
+    const { id, name } = await getBootedDevice();
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Booted Simulator: "${name}". UUID: "${id}"`,
+        },
+      ],
+    };
+  } catch (error: any) {
+    return {
+      content: [
+        { type: "text", text: `Error: ${error.message || String(error)}` },
+      ],
+    };
+  }
+});
 
 /**
  * Take a screenshot of a booted iOS simulator
