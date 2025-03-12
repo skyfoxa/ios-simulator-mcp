@@ -116,30 +116,42 @@ server.tool("get_booted_sim_id", {}, async () => {
   }
 });
 
+async function getBootedDevice() {
+  const { stdout, stderr } = await execAsync("xcrun simctl list devices");
+
+  if (stderr) throw new Error(stderr);
+
+  // Parse the output to find booted device
+  const lines = stdout.split("\n");
+  for (const line of lines) {
+    if (line.includes("Booted")) {
+      // Extract the UUID - it's inside parentheses
+      const match = line.match(/\(([-0-9A-F]+)\)/);
+      if (match) {
+        const deviceId = match[1];
+        const deviceName = line.split("(")[0].trim();
+        return {
+          name: deviceName,
+          id: deviceId,
+        };
+      }
+    }
+  }
+
+  throw Error("No booted simulator found");
+}
+
 async function getBootedDeviceId(
   deviceId: string | undefined
 ): Promise<string> {
   // If deviceId not provided, get the currently booted simulator
   let actualDeviceId = deviceId;
   if (!actualDeviceId) {
-    const { stdout } = await execAsync("xcrun simctl list devices");
-
-    // Parse the output to find booted device
-    const lines = stdout.split("\n");
-    for (const line of lines) {
-      if (line.includes("Booted")) {
-        // Extract the UUID - it's inside parentheses
-        const match = line.match(/\(([-0-9A-F]+)\)/);
-        if (match) {
-          actualDeviceId = match[1];
-          break;
-        }
-      }
-    }
-
-    if (!actualDeviceId) {
-      throw new Error("No booted simulator found and no deviceId provided");
-    }
+    const { id } = await getBootedDevice();
+    actualDeviceId = id;
+  }
+  if (!actualDeviceId) {
+    throw new Error("No booted simulator found and no deviceId provided");
   }
   return actualDeviceId;
 }
