@@ -298,6 +298,41 @@ server.tool(
   }
 );
 
+server.tool(
+  "ui-text",
+  "Input text",
+  {
+    udid: z
+      .string()
+      .optional()
+      .describe("Udid of target, can also be set with the IDB_UDID env var"),
+    text: z.string().describe("Text to input"),
+  },
+  async ({ udid, text }) => {
+    try {
+      const actualUdid = await getBootedDeviceId(udid);
+      const { stderr } = await execAsync(
+        `idb ui text ${text} --udid ${actualUdid}`
+      );
+
+      if (stderr) throw new Error(stderr);
+
+      return {
+        content: [{ type: "text", text: "Typed successfully" }],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error describing all of the ui: ${toError(error).message}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
