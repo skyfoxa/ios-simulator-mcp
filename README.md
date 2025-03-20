@@ -1,5 +1,8 @@
 # iOS Simulator MCP Tool
 
+[![NPM Version](https://img.shields.io/npm/v/ios-simulator-mcp)](https://www.npmjs.com/package/ios-simulator-mcp)
+
+
 A Model Context Protocol (MCP) tool for interacting with iOS simulators. This tool allows you to interact with iOS simulators by getting information about them, controlling UI interactions, and inspecting UI elements.
 
 https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
