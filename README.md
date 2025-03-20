@@ -25,6 +25,31 @@ https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
 
 ## Installation
 
+### Option 1: Using NPX (Recommended)
+
+1. Edit your Cursor MCP configuration:
+
+   ```bash
+   code ~/.cursor/mcp.json
+   ```
+
+2. Add the iOS simulator server to your configuration:
+
+   ```json
+   {
+     "mcpServers": {
+       "ios-simulator": {
+         "command": "npx",
+         "args": ["-y", "ios-simulator-mcp"]
+       }
+     }
+   }
+   ```
+
+3. Restart Cursor.
+
+### Option 2: Local Development
+
 1. Clone this repository:
 
    ```bash
@@ -39,38 +64,33 @@ https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
    ```
 
 3. Build the project:
+
    ```bash
    npm run build
    ```
 
-## Usage with Cursor
-
-1. Make sure you have Cursor installed and updated to the latest version.
-
-2. Edit your Cursor MCP configuration:
+4. Edit your Cursor MCP configuration:
 
    ```bash
    code ~/.cursor/mcp.json
    ```
 
-3. Add the iOS simulator server to your configuration:
+5. Add the iOS simulator server to your configuration:
 
    ```json
    {
      "mcpServers": {
        "ios-simulator": {
          "command": "node",
-         "args": ["/Users/joshuayoes/Code/ios-simulator-mcp/build/index.js"]
+         "args": ["/path/to/your/ios-simulator-mcp/build/index.js"]
        }
      }
    }
    ```
 
-   Replace `"/Users/joshuayoes/Code` with the actual path to your project directory.
+   Replace `"/path/to/your"` with the actual path to your project directory.
 
-4. Restart Cursor.
-
-5. In Cursor, you can now use the simulator tools by accessing the available MCP tools.
+6. Restart Cursor.
 
 ## Available Tools
 
