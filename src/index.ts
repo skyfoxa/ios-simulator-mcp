@@ -5,48 +5,15 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { exec } from "child_process";
 import { promisify } from "util";
 import { z } from "zod";
-import path from "path";
-import fs from "fs";
 
 // Convert exec to use promises
 const execAsync = promisify(exec);
-
-// Configure screenshot resource directory
-const SCREENSHOT_RESOURCE_DIR =
-  process.env.SCREENSHOT_RESOURCE_DIR ||
-  path.join(process.env.HOME || "", "Downloads", "ios-simulator-screenshots");
-
-// Create the screenshot directory if it doesn't exist
-if (!fs.existsSync(SCREENSHOT_RESOURCE_DIR)) {
-  fs.mkdirSync(SCREENSHOT_RESOURCE_DIR, { recursive: true });
-}
-
-// Store screenshots in memory
-const screenshots = new Map<string, string>();
 
 // Initialize FastMCP server
 const server = new McpServer({
   name: "ios-simulator",
   version: "1.0.0",
 });
-
-// Register new screenshots as they're created
-function registerScreenshotResource(name: string, data: string) {
-  screenshots.set(name, data);
-
-  // Register a resource for this screenshot if it doesn't exist already
-  server.resource(`screenshot-${name}`, `screenshot://${name}`, async (uri) => {
-    return {
-      contents: [
-        {
-          uri: uri.href,
-          mimeType: "image/png",
-          blob: data,
-        },
-      ],
-    };
-  });
-}
 
 function toError(input: unknown): Error {
   if (input instanceof Error) return input;
@@ -61,19 +28,6 @@ function toError(input: unknown): Error {
 
   return new Error(JSON.stringify(input));
 }
-
-// Add a resource to list available screenshots
-server.resource("screenshot-list", "screenshot://list", async (uri) => {
-  return {
-    contents: [
-      {
-        uri: uri.href,
-        mimeType: "text/plain",
-        text: Array.from(screenshots.keys()).join("\n"),
-      },
-    ],
-  };
-});
 
 async function getBootedDevice() {
   const { stdout, stderr } = await execAsync("xcrun simctl list devices");
@@ -140,92 +94,9 @@ server.tool("get_booted_sim_id", {}, async () => {
   }
 });
 
-/**
- * Take a screenshot of a booted iOS simulator
- * @param deviceId The UUID of the simulator to screenshot
- * @param name Name for the screenshot (used for resource access)
- * @param outputPath Optional path where to save the screenshot (default: timestamp-based filename in the screenshot resource directory)
- * @returns Path to the saved screenshot or error message
- */
-server.tool(
-  "take_screenshot",
-  {
-    deviceId: z
-      .string()
-      .optional()
-      .describe(
-        "The UUID of the simulator to screenshot (will use booted simulator if not provided)"
-      ),
-    name: z
-      .string()
-      .optional()
-      .describe("Name for the screenshot to be accessed as a resource"),
-    outputPath: z
-      .string()
-      .optional()
-      .describe("Optional path where to save the screenshot"),
-  },
-  async ({ deviceId, name, outputPath }) => {
-    try {
-      const actualDeviceId = getBootedDeviceId(deviceId);
-      // Generate timestamp for name if not provided
-      const screenshotName = name || `screenshot-${Date.now()}`;
-
-      // Generate default filename with timestamp if no path provided
-      const actualPath =
-        outputPath ||
-        path.join(SCREENSHOT_RESOURCE_DIR, `${screenshotName}.png`);
-
-      // Ensure the directory exists
-      const directory = path.dirname(actualPath);
-      if (!fs.existsSync(directory)) {
-        fs.mkdirSync(directory, { recursive: true });
-      }
-
-      // Take the screenshot
-      await execAsync(
-        `xcrun simctl io ${actualDeviceId} screenshot "${actualPath}"`
-      );
-
-      // Get absolute path
-      const absolutePath = path.resolve(actualPath);
-
-      // Read the file and store it in memory as base64
-      const imageBuffer = fs.readFileSync(actualPath);
-      const base64Data = imageBuffer.toString("base64");
-
-      // Register as a resource
-      registerScreenshotResource(screenshotName, base64Data);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Screenshot saved to: ${absolutePath}\nAccessible as resource: screenshot://${screenshotName}`,
-          },
-          {
-            type: "image",
-            data: base64Data,
-            mimeType: "image/png",
-          },
-        ],
-      };
-    } catch (error: any) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error taking screenshot: ${toError(error).message}`,
-          },
-        ],
-      };
-    }
-  }
-);
-
 server.tool(
   "ui-describe-all",
-  "Describes Accessibility Information for the entire screen",
+  "Describes Accessibility Information for the entire screen in the iOS Simulator",
   {
     udid: z
       .string()
@@ -258,7 +129,7 @@ server.tool(
 
 server.tool(
   "ui-tap",
-  "Tap On the Screen",
+  "Tap on the screen in the iOS Simulator",
   {
     duration: z.string().optional().describe("Press duration"),
     udid: z
@@ -296,7 +167,7 @@ server.tool(
 
 server.tool(
   "ui-text",
-  "Input text",
+  "Input text into the iOS Simulator",
   {
     udid: z
       .string()
