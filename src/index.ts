@@ -246,6 +246,44 @@ server.tool(
   }
 );
 
+server.tool(
+  "ui_describe_point",
+  "Returns the accessibility element at given co-ordinates on the iOS Simulator's screen",
+  {
+    udid: z
+      .string()
+      .optional()
+      .describe("Udid of target, can also be set with the IDB_UDID env var"),
+    x: z.number().describe("The x-coordinate"),
+    y: z.number().describe("The y-coordinate"),
+  },
+  async ({ udid, x, y }) => {
+    try {
+      const actualUdid = await getBootedDeviceId(udid);
+      const { stdout, stderr } = await execAsync(
+        `idb ui describe-point --udid ${actualUdid} ${x} ${y} --json`
+      );
+
+      if (stderr) throw new Error(stderr);
+
+      return {
+        content: [{ type: "text", text: stdout }],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error describing point (${x}, ${y}): ${
+              toError(error).message
+            }`,
+          },
+        ],
+      };
+    }
+  }
+);
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
