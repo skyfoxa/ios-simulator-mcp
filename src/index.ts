@@ -69,10 +69,6 @@ async function getBootedDeviceId(
   return actualDeviceId;
 }
 
-/**
- * Get the ID of the currently booted iOS simulator
- * @returns The details and UUID of the booted simulator.
- */
 server.tool(
   "get_booted_sim_id",
   "Get the ID of the currently booted iOS simulator",
@@ -199,6 +195,50 @@ server.tool(
             text: `Error typing text into the iOS Simulator: ${
               toError(error).message
             }`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
+  "ui_swipe",
+  "Swipe on the screen in the iOS Simulator",
+  {
+    udid: z
+      .string()
+      .optional()
+      .describe("Udid of target, can also be set with the IDB_UDID env var"),
+    x_start: z.number().describe("The starting x-coordinate"),
+    y_start: z.number().describe("The starting y-coordinate"),
+    x_end: z.number().describe("The ending x-coordinate"),
+    y_end: z.number().describe("The ending y-coordinate"),
+    delta: z
+      .number()
+      .optional()
+      .describe("The size of each step in the swipe (default is 1)")
+      .default(1),
+  },
+  async ({ udid, x_start, y_start, x_end, y_end, delta }) => {
+    try {
+      const actualUdid = await getBootedDeviceId(udid);
+      const deltaArg = delta ? `--delta ${delta}` : "";
+      const { stderr } = await execAsync(
+        `idb ui swipe --udid ${actualUdid} ${deltaArg} ${x_start} ${y_start} ${x_end} ${y_end} --json`
+      );
+
+      if (stderr) throw new Error(stderr);
+
+      return {
+        content: [{ type: "text", text: "Swiped successfully" }],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error swiping on the screen: ${toError(error).message}`,
           },
         ],
       };
