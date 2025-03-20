@@ -95,8 +95,8 @@ server.tool(
 );
 
 server.tool(
-  "ui_describe",
-  "Describes Accessibility Information for the entire screen in the iOS Simulator",
+  "ui_describe_all",
+  "Describes accessibility information for the entire screen in the iOS Simulator",
   {
     udid: z
       .string()
