@@ -2,6 +2,8 @@
 
 A Model Context Protocol (MCP) tool for interacting with iOS simulators. This tool allows you to interact with iOS simulators by getting information about them, controlling UI interactions, and inspecting UI elements.
 
+https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
+
 ## Features
 
 - Get the ID of the currently booted iOS simulator
@@ -19,6 +21,7 @@ A Model Context Protocol (MCP) tool for interacting with iOS simulators. This to
 - Xcode and iOS simulators installed
 - macOS (as iOS simulators are only available on macOS)
 - Facebook IDB tool installed (`brew install facebook/fb/idb`)
+
 
 ## Installation
 
