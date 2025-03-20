@@ -9,7 +9,7 @@ import { z } from "zod";
 // Convert exec to use promises
 const execAsync = promisify(exec);
 
-// Initialize FastMCP server
+// Initialize McpServer server
 const server = new McpServer({
   name: "ios-simulator",
   version: "1.0.0",
