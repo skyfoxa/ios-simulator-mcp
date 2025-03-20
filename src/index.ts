@@ -6,10 +6,8 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { z } from "zod";
 
-// Convert exec to use promises
 const execAsync = promisify(exec);
 
-// Initialize McpServer server
 const server = new McpServer({
   name: "ios-simulator",
   version: require("../package.json").version,
