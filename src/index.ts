@@ -12,7 +12,7 @@ const execAsync = promisify(exec);
 // Initialize McpServer server
 const server = new McpServer({
   name: "ios-simulator",
-  version: "1.0.0",
+  version: require("../package.json").version,
 });
 
 function toError(input: unknown): Error {
