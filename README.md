@@ -16,12 +16,10 @@ https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
 
 ## Prerequisites
 
-- Node.js (v16 or higher)
-- TypeScript
-- Xcode and iOS simulators installed
+- Node.js
 - macOS (as iOS simulators are only available on macOS)
-- Facebook IDB tool installed (`brew install facebook/fb/idb`)
-
+- [Xcode](https://developer.apple.com/xcode/resources/) and iOS simulators installed
+- Facebook [IDB](https://fbidb.io/) tool [(see install guide)](https://fbidb.io/docs/installation)
 
 ## Installation
 
@@ -72,7 +70,7 @@ https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
 4. Edit your Cursor MCP configuration:
 
    ```bash
-   code ~/.cursor/mcp.json
+   cursor ~/.cursor/mcp.json
    ```
 
 5. Add the iOS simulator server to your configuration:
