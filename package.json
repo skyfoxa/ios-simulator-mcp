@@ -1,12 +1,17 @@
 {
-  "name": "ios-sim-mcp",
+  "name": "@joshuayoes/ios-simulator-mcp",
   "version": "1.0.0",
-  "description": "MCP tool for interacting with iOS simulators",
+  "description": "MCP server for interacting with the iOS simulator",
   "bin": {
-    "ios-sim-mcp": "./build/index.js"
+    "ios-simulator-mcp": "./build/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joshuayoes/ios-simulator-mcp.git"
   },
   "files": [
-    "build"
+    "build",
+    "package.json"
   ],
   "scripts": {
     "prepare": "npm run build",
@@ -16,17 +21,23 @@
     "predev": "npm run build",
     "dev": "npx @modelcontextprotocol/inspector node build/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "ios",
+    "simulator",
+    "mcp",
+    "modelcontextprotocol"
+  ],
+  "author": {
+    "name": "Joshua Yoes",
+    "url": "https://joshuayoes.com"
+  },
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/inspector": "^0.4.1",
     "@modelcontextprotocol/sdk": "^1.6.0",
-    "zod-to-json-schema": "^3.23.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "shx": "^0.3.4",
     "@types/node": "^22.13.5",
     "typescript": "^5.7.3"
   }

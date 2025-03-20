@@ -1,12 +1,16 @@
 # iOS Simulator MCP Tool
 
-A Model Context Protocol (MCP) tool for interacting with iOS simulators. This tool allows you to get information about booted simulators, list all available simulators, and boot simulators.
+A Model Context Protocol (MCP) tool for interacting with iOS simulators. This tool allows you to interact with iOS simulators by getting information about them, controlling UI interactions, and inspecting UI elements.
 
 ## Features
 
 - Get the ID of the currently booted iOS simulator
-- List all available iOS simulators
-- Boot a specific iOS simulator by ID
+- Interact with the simulator UI:
+  - Describe all accessibility elements on screen
+  - Tap on screen coordinates
+  - Input text
+  - Swipe between coordinates
+  - Get information about UI elements at specific coordinates
 
 ## Prerequisites
 
@@ -14,14 +18,15 @@ A Model Context Protocol (MCP) tool for interacting with iOS simulators. This to
 - TypeScript
 - Xcode and iOS simulators installed
 - macOS (as iOS simulators are only available on macOS)
+- Facebook IDB tool installed (`brew install facebook/fb/idb`)
 
 ## Installation
 
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/yourusername/ios-sim-mcp.git
-   cd ios-sim-mcp
+   git clone https://github.com/joshuayoes/ios-simulator-mcp
+   cd ios-simulator-mcp
    ```
 
 2. Install dependencies:
@@ -35,14 +40,14 @@ A Model Context Protocol (MCP) tool for interacting with iOS simulators. This to
    npm run build
    ```
 
-## Usage with Claude Desktop
+## Usage with Cursor
 
-1. Make sure you have Claude for Desktop installed and updated to the latest version.
+1. Make sure you have Cursor installed and updated to the latest version.
 
-2. Edit your Claude for Desktop App configuration:
+2. Edit your Cursor MCP configuration:
 
    ```bash
-   code ~/Library/Application\ Support/Claude/claude_desktop_config.json
+   code ~/.cursor/mcp.json
    ```
 
 3. Add the iOS simulator server to your configuration:
@@ -52,20 +57,17 @@ A Model Context Protocol (MCP) tool for interacting with iOS simulators. This to
      "mcpServers": {
        "ios-simulator": {
          "command": "node",
-         "args": ["/ABSOLUTE/PATH/TO/ios-sim-mcp/dist/ios-sim-tool.js"]
+         "args": ["/Users/joshuayoes/Code/ios-simulator-mcp/build/index.js"]
        }
      }
    }
    ```
 
-   Replace `/ABSOLUTE/PATH/TO/` with the actual path to your project directory.
+   Replace `"/Users/joshuayoes/Code` with the actual path to your project directory.
 
-4. Restart Claude for Desktop.
+4. Restart Cursor.
 
-5. In Claude, you can now use the simulator tools by clicking on the hammer icon and selecting the appropriate tool:
-   - `get_booted_sim_id`: Get information about the currently booted simulator
-   - `get_all_simulators`: List all available simulators
-   - `boot_simulator`: Boot a specific simulator by ID
+5. In Cursor, you can now use the simulator tools by accessing the available MCP tools.
 
 ## Available Tools
 
@@ -73,34 +75,91 @@ A Model Context Protocol (MCP) tool for interacting with iOS simulators. This to
 
 Gets the ID and details of the currently booted iOS simulator.
 
-**Example usage in Claude:**
+**Example usage in Cursor:**
 
 ```
 What simulator is currently running?
 ```
 
-### get_all_simulators
+### ui_describe_all
 
-Lists all available iOS simulators.
-
-**Example usage in Claude:**
-
-```
-Show me all available iOS simulators
-```
-
-### boot_simulator
-
-Boots a specific simulator by ID.
+Describes accessibility information for the entire screen in the iOS Simulator.
 
 **Parameters:**
 
-- `deviceId`: The UUID of the simulator to boot
+- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
 
-**Example usage in Claude:**
+**Example usage in Cursor:**
 
 ```
-Boot the simulator with ID 12345678-1234-1234-1234-123456789012
+Show me all UI elements on the screen
+```
+
+### ui_tap
+
+Tap on the screen in the iOS Simulator.
+
+**Parameters:**
+
+- `x`: The x-coordinate to tap
+- `y`: The y-coordinate to tap
+- `duration` (optional): Press duration
+- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
+
+**Example usage in Cursor:**
+
+```
+Tap on the screen at coordinates x=150, y=300
+```
+
+### ui_text
+
+Input text into the iOS Simulator.
+
+**Parameters:**
+
+- `text`: Text to input
+- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
+
+**Example usage in Cursor:**
+
+```
+Type "Hello, Cursor!" into the text field
+```
+
+### ui_swipe
+
+Swipe on the screen in the iOS Simulator.
+
+**Parameters:**
+
+- `x_start`: The starting x-coordinate
+- `y_start`: The starting y-coordinate
+- `x_end`: The ending x-coordinate
+- `y_end`: The ending y-coordinate
+- `delta` (optional): The size of each step in the swipe (default is 1)
+- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
+
+**Example usage in Cursor:**
+
+```
+Swipe from x=100, y=300 to x=100, y=100
+```
+
+### ui_describe_point
+
+Returns the accessibility element at given coordinates on the iOS Simulator's screen.
+
+**Parameters:**
+
+- `x`: The x-coordinate
+- `y`: The y-coordinate
+- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
+
+**Example usage in Cursor:**
+
+```
+What UI element is at position x=200, y=400?
 ```
 
 ## License
