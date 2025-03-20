@@ -73,29 +73,33 @@ async function getBootedDeviceId(
  * Get the ID of the currently booted iOS simulator
  * @returns The details and UUID of the booted simulator.
  */
-server.tool("get_booted_sim_id", {}, async () => {
-  try {
-    const { id, name } = await getBootedDevice();
+server.tool(
+  "get_booted_sim_id",
+  "Get the ID of the currently booted iOS simulator",
+  async () => {
+    try {
+      const { id, name } = await getBootedDevice();
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Booted Simulator: "${name}". UUID: "${id}"`,
-        },
-      ],
-    };
-  } catch (error: any) {
-    return {
-      content: [
-        { type: "text", text: `Error: ${error.message || String(error)}` },
-      ],
-    };
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Booted Simulator: "${name}". UUID: "${id}"`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return {
+        content: [
+          { type: "text", text: `Error: ${error.message || String(error)}` },
+        ],
+      };
+    }
   }
-});
+);
 
 server.tool(
-  "ui-describe-all",
+  "ui_describe",
   "Describes Accessibility Information for the entire screen in the iOS Simulator",
   {
     udid: z
@@ -128,7 +132,7 @@ server.tool(
 );
 
 server.tool(
-  "ui-tap",
+  "ui_tap",
   "Tap on the screen in the iOS Simulator",
   {
     duration: z.string().optional().describe("Press duration"),
@@ -157,7 +161,7 @@ server.tool(
         content: [
           {
             type: "text",
-            text: `Error describing all of the ui: ${toError(error).message}`,
+            text: `Error tapping on the screen: ${toError(error).message}`,
           },
         ],
       };
@@ -166,7 +170,7 @@ server.tool(
 );
 
 server.tool(
-  "ui-text",
+  "ui_type",
   "Input text into the iOS Simulator",
   {
     udid: z
@@ -192,7 +196,9 @@ server.tool(
         content: [
           {
             type: "text",
-            text: `Error describing all of the ui: ${toError(error).message}`,
+            text: `Error typing text into the iOS Simulator: ${
+              toError(error).message
+            }`,
           },
         ],
       };
