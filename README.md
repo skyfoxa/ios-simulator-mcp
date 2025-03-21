@@ -15,6 +15,7 @@ https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
   - Input text
   - Swipe between coordinates
   - Get information about UI elements at specific coordinates
+  - Take screenshots of the simulator screen
 
 ## 💡 Use Case: QA Step in Agent Mode
 
@@ -54,8 +55,14 @@ After a feature implementation:
   ```
 
 - **Detailed Element Check:**
+
   ```
   Describe the UI element at position x=300, y=350 to ensure proper labeling and functionality
+  ```
+
+- **Take Screenshot:**
+  ```
+  Take a screenshot of the current simulator screen and save it to my_screenshot.png
   ```
 
 ## Prerequisites

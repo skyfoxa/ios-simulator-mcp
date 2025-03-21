@@ -5,6 +5,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { exec } from "child_process";
 import { promisify } from "util";
 import { z } from "zod";
+import path from "path";
+import os from "os";
 
 const execAsync = promisify(exec);
 
@@ -275,6 +277,90 @@ server.tool(
             text: `Error describing point (${x}, ${y}): ${
               toError(error).message
             }`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+function ensureAbsolutePath(filePath: string): string {
+  if (path.isAbsolute(filePath)) {
+    return filePath;
+  }
+
+  // Handle ~/something paths
+  if (filePath.startsWith("~/")) {
+    return path.join(os.homedir(), filePath.slice(2));
+  }
+
+  // For relative paths, use ~/Downloads as default directory
+  return path.join(os.homedir(), "Downloads", filePath);
+}
+
+server.tool(
+  "screenshot",
+  "Takes a screenshot of the iOS Simulator",
+  {
+    udid: z
+      .string()
+      .optional()
+      .describe("Udid of target, can also be set with the IDB_UDID env var"),
+    output_path: z
+      .string()
+      .describe(
+        "File path where the screenshot will be saved (if relative, ~/Downloads will be used as base directory)"
+      ),
+    type: z
+      .enum(["png", "tiff", "bmp", "gif", "jpeg"])
+      .optional()
+      .describe("Image format (png, tiff, bmp, gif, or jpeg). Default is png."),
+    display: z
+      .enum(["internal", "external"])
+      .optional()
+      .describe(
+        "Display to capture (internal or external). Default depends on device type."
+      ),
+    mask: z
+      .enum(["ignored", "alpha", "black"])
+      .optional()
+      .describe(
+        "For non-rectangular displays, handle the mask by policy (ignored, alpha, or black)"
+      ),
+  },
+  async ({ udid, output_path, type, display, mask }) => {
+    try {
+      const actualUdid = await getBootedDeviceId(udid);
+      const absolutePath = ensureAbsolutePath(output_path);
+
+      let command = `xcrun simctl io ${actualUdid} screenshot ${absolutePath}`;
+
+      if (type) command += ` --type=${type}`;
+      if (display) command += ` --display=${display}`;
+      if (mask) command += ` --mask=${mask}`;
+
+      // command is weird, it responds with stderr on success and stdout is blank
+      const { stderr: stdout } = await execAsync(command);
+
+      // throw if we don't get the expected success message
+      if (stdout && !stdout.includes("Wrote screenshot to")) {
+        throw new Error(stdout);
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: stdout,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error taking screenshot: ${toError(error).message}`,
           },
         ],
       };
