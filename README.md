@@ -4,7 +4,10 @@
 
 A Model Context Protocol (MCP) tool for interacting with iOS simulators. This tool allows you to interact with iOS simulators by getting information about them, controlling UI interactions, and inspecting UI elements.
 
-https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
+
+https://github.com/user-attachments/assets/453ebe7b-cc93-4ac2-b08d-0f8ac8339ad3
+
+
 
 ## Features
 
