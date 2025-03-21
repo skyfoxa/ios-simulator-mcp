@@ -16,6 +16,48 @@ https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
   - Swipe between coordinates
   - Get information about UI elements at specific coordinates
 
+## 💡 Use Case: QA Step in Agent Mode
+
+This MCP can be used effectively in agent mode as a Quality Assurance step immediately after implementing features, ensuring UI consistency and correct behavior.
+
+### How to Use
+
+After a feature implementation:
+
+1. Activate agent mode in Cursor.
+2. Use the prompts below to quickly validate and document UI interactions.
+
+### Example Prompts
+
+- **Verify UI Elements:**
+
+  ```
+  Verify all accessibility elements on the current screen
+  ```
+
+- **Confirm Text Input:**
+
+  ```
+  Enter "QA Test" into the text input field and confirm the input is correct
+  ```
+
+- **Check Tap Response:**
+
+  ```
+  Tap on coordinates x=250, y=400 and verify the expected element is triggered
+  ```
+
+- **Validate Swipe Action:**
+
+  ```
+  Swipe from x=150, y=600 to x=150, y=100 and confirm correct behavior
+  ```
+
+- **Detailed Element Check:**
+  ```
+  Describe the UI element at position x=300, y=350 to ensure proper labeling and functionality
+  ```
+
 ## Prerequisites
 
 - Node.js
@@ -91,99 +133,6 @@ https://github.com/user-attachments/assets/f126ccf3-f16c-4759-8b42-b78a443c3a1f
    Replace `"/path/to/your"` with the actual path to your project directory.
 
 6. Restart Cursor.
-
-## Available Tools
-
-### get_booted_sim_id
-
-Gets the ID and details of the currently booted iOS simulator.
-
-**Example usage in Cursor:**
-
-```
-What simulator is currently running?
-```
-
-### ui_describe_all
-
-Describes accessibility information for the entire screen in the iOS Simulator.
-
-**Parameters:**
-
-- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
-
-**Example usage in Cursor:**
-
-```
-Show me all UI elements on the screen
-```
-
-### ui_tap
-
-Tap on the screen in the iOS Simulator.
-
-**Parameters:**
-
-- `x`: The x-coordinate to tap
-- `y`: The y-coordinate to tap
-- `duration` (optional): Press duration
-- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
-
-**Example usage in Cursor:**
-
-```
-Tap on the screen at coordinates x=150, y=300
-```
-
-### ui_text
-
-Input text into the iOS Simulator.
-
-**Parameters:**
-
-- `text`: Text to input
-- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
-
-**Example usage in Cursor:**
-
-```
-Type "Hello, Cursor!" into the text field
-```
-
-### ui_swipe
-
-Swipe on the screen in the iOS Simulator.
-
-**Parameters:**
-
-- `x_start`: The starting x-coordinate
-- `y_start`: The starting y-coordinate
-- `x_end`: The ending x-coordinate
-- `y_end`: The ending y-coordinate
-- `delta` (optional): The size of each step in the swipe (default is 1)
-- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
-
-**Example usage in Cursor:**
-
-```
-Swipe from x=100, y=300 to x=100, y=100
-```
-
-### ui_describe_point
-
-Returns the accessibility element at given coordinates on the iOS Simulator's screen.
-
-**Parameters:**
-
-- `x`: The x-coordinate
-- `y`: The y-coordinate
-- `udid` (optional): The UUID of the simulator to target (will use booted simulator if not provided)
-
-**Example usage in Cursor:**
-
-```
-What UI element is at position x=200, y=400?
-```
 
 ## License
 
