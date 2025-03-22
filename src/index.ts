@@ -2,7 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { z } from "zod";
 import path from "path";
@@ -361,6 +361,108 @@ server.tool(
           {
             type: "text",
             text: `Error taking screenshot: ${toError(error).message}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
+  "record_video",
+  "Records a video of the iOS Simulator using simctl directly",
+  {
+    output_path: z
+      .string()
+      .optional()
+      .describe("Optional output path (defaults to ~/Downloads/simulator_recording.mp4)"),
+  },
+  async ({ output_path }) => {
+    try {
+      const defaultFileName = `simulator_recording_${Date.now()}.mp4`;
+      const outputFile = output_path || path.join(os.homedir(), "Downloads", defaultFileName);
+      
+      // Start the recording process
+      const recordingProcess = spawn("xcrun", [
+        "simctl",
+        "io",
+        "booted",
+        "recordVideo",
+        "--codec=h264",
+        "--display=internal",
+        "--mask=ignored",
+        outputFile
+      ]);
+      
+      // Wait for recording to start
+      await new Promise((resolve, reject) => {
+        let errorOutput = '';
+        
+        recordingProcess.stderr.on('data', (data) => {
+          const message = data.toString();
+          if (message.includes("Recording started")) {
+            resolve(true);
+          } else {
+            errorOutput += message;
+          }
+        });
+        
+        // Set timeout for start verification
+        setTimeout(() => {
+          if (recordingProcess.killed) {
+            reject(new Error("Recording process terminated unexpectedly"));
+          } else {
+            resolve(true);
+          }
+        }, 3000);
+      });
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Recording started. The video will be saved to: ${outputFile}\nTo stop recording, use the stop_recording command.`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error starting recording: ${toError(error).message}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
+  "stop_recording",
+  "Stops the simulator video recording using killall",
+  {},
+  async () => {
+    try {
+      await execAsync('pkill -SIGINT -f "simctl.*recordVideo"');
+      
+      // Wait a moment for the video to finalize
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Recording stopped successfully.",
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error stopping recording: ${toError(error).message}`,
           },
         ],
       };
