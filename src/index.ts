@@ -2,7 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { z } from "zod";
 import path from "path";
@@ -361,6 +361,135 @@ server.tool(
           {
             type: "text",
             text: `Error taking screenshot: ${toError(error).message}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
+  "record_video",
+  "Records a video of the iOS Simulator using simctl directly",
+  {
+    output_path: z
+      .string()
+      .optional()
+      .describe(
+        `Optional output path (defaults to ~/Downloads/simulator_recording_$DATE.mp4)`
+      ),
+    codec: z
+      .enum(["h264", "hevc"])
+      .optional()
+      .describe(
+        'Specifies the codec type: "h264" or "hevc". Default is "hevc".'
+      ),
+    display: z
+      .enum(["internal", "external"])
+      .optional()
+      .describe(
+        'Display to capture: "internal" or "external". Default depends on device type.'
+      ),
+    mask: z
+      .enum(["ignored", "alpha", "black"])
+      .optional()
+      .describe(
+        'For non-rectangular displays, handle the mask by policy: "ignored", "alpha", or "black".'
+      ),
+    force: z
+      .boolean()
+      .optional()
+      .describe(
+        "Force the output file to be written to, even if the file already exists."
+      ),
+  },
+  async ({ output_path, codec, display, mask, force }) => {
+    try {
+      const defaultFileName = `simulator_recording_${Date.now()}.mp4`;
+      const outputFile = ensureAbsolutePath(output_path ?? defaultFileName);
+
+      // Build command arguments array
+      const args = ["simctl", "io", "booted", "recordVideo"];
+
+      if (codec) args.push(`--codec=${codec}`);
+      if (display) args.push(`--display=${display}`);
+      if (mask) args.push(`--mask=${mask}`);
+      if (force) args.push("--force");
+
+      args.push(outputFile);
+
+      // Start the recording process
+      const recordingProcess = spawn("xcrun", args);
+
+      // Wait for recording to start
+      await new Promise((resolve, reject) => {
+        let errorOutput = "";
+
+        recordingProcess.stderr.on("data", (data) => {
+          const message = data.toString();
+          if (message.includes("Recording started")) {
+            resolve(true);
+          } else {
+            errorOutput += message;
+          }
+        });
+
+        // Set timeout for start verification
+        setTimeout(() => {
+          if (recordingProcess.killed) {
+            reject(new Error("Recording process terminated unexpectedly"));
+          } else {
+            resolve(true);
+          }
+        }, 3000);
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Recording started. The video will be saved to: ${outputFile}\nTo stop recording, use the stop_recording command.`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error starting recording: ${toError(error).message}`,
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
+  "stop_recording",
+  "Stops the simulator video recording using killall",
+  {},
+  async () => {
+    try {
+      await execAsync('pkill -SIGINT -f "simctl.*recordVideo"');
+
+      // Wait a moment for the video to finalize
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Recording stopped successfully.",
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error stopping recording: ${toError(error).message}`,
           },
         ],
       };

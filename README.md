@@ -68,6 +68,17 @@ After a feature implementation:
   Take a screenshot of the current simulator screen and save it to my_screenshot.png
   ```
 
+- **Record Video:**
+  ```
+  Start recording a video of the simulator screen (saves to ~/Downloads/simulator_recording.mp4 by default)
+  ```
+
+- **Stop Recording:**
+  ```
+  Stop the current simulator screen recording
+  ```
+
+
 ## Prerequisites
 
 - Node.js
