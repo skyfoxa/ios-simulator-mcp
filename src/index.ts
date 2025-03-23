@@ -375,30 +375,57 @@ server.tool(
     output_path: z
       .string()
       .optional()
-      .describe("Optional output path (defaults to ~/Downloads/simulator_recording.mp4)"),
+      .describe(
+        `Optional output path (defaults to ~/Downloads/simulator_recording_$DATE.mp4)`
+      ),
+    codec: z
+      .enum(["h264", "hevc"])
+      .optional()
+      .describe(
+        'Specifies the codec type: "h264" or "hevc". Default is "hevc".'
+      ),
+    display: z
+      .enum(["internal", "external"])
+      .optional()
+      .describe(
+        'Display to capture: "internal" or "external". Default depends on device type.'
+      ),
+    mask: z
+      .enum(["ignored", "alpha", "black"])
+      .optional()
+      .describe(
+        'For non-rectangular displays, handle the mask by policy: "ignored", "alpha", or "black".'
+      ),
+    force: z
+      .boolean()
+      .optional()
+      .describe(
+        "Force the output file to be written to, even if the file already exists."
+      ),
   },
-  async ({ output_path }) => {
+  async ({ output_path, codec, display, mask, force }) => {
     try {
       const defaultFileName = `simulator_recording_${Date.now()}.mp4`;
-      const outputFile = output_path || path.join(os.homedir(), "Downloads", defaultFileName);
-      
+      const outputFile = ensureAbsolutePath(output_path ?? defaultFileName);
+
+      // Build command arguments array
+      const args = ["simctl", "io", "booted", "recordVideo"];
+
+      if (codec) args.push(`--codec=${codec}`);
+      if (display) args.push(`--display=${display}`);
+      if (mask) args.push(`--mask=${mask}`);
+      if (force) args.push("--force");
+
+      args.push(outputFile);
+
       // Start the recording process
-      const recordingProcess = spawn("xcrun", [
-        "simctl",
-        "io",
-        "booted",
-        "recordVideo",
-        "--codec=h264",
-        "--display=internal",
-        "--mask=ignored",
-        outputFile
-      ]);
-      
+      const recordingProcess = spawn("xcrun", args);
+
       // Wait for recording to start
       await new Promise((resolve, reject) => {
-        let errorOutput = '';
-        
-        recordingProcess.stderr.on('data', (data) => {
+        let errorOutput = "";
+
+        recordingProcess.stderr.on("data", (data) => {
           const message = data.toString();
           if (message.includes("Recording started")) {
             resolve(true);
@@ -406,7 +433,7 @@ server.tool(
             errorOutput += message;
           }
         });
-        
+
         // Set timeout for start verification
         setTimeout(() => {
           if (recordingProcess.killed) {
@@ -416,7 +443,7 @@ server.tool(
           }
         }, 3000);
       });
-      
+
       return {
         content: [
           {
@@ -445,10 +472,10 @@ server.tool(
   async () => {
     try {
       await execAsync('pkill -SIGINT -f "simctl.*recordVideo"');
-      
+
       // Wait a moment for the video to finalize
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       return {
         content: [
           {
