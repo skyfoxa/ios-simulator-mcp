@@ -16,6 +16,13 @@ https://github.com/user-attachments/assets/453ebe7b-cc93-4ac2-b08d-0f8ac8339ad3
   - Swipe between coordinates
   - Get information about UI elements at specific coordinates
   - Take screenshots of the simulator screen
+- Filter specific tools using environment variables
+
+## Configuration
+
+### Environment Variables
+
+- `IOS_SIMULATOR_MCP_FILTERED_TOOLS`: A comma-separated list of tool names to filter out from being registered. For example: `screenshot,record_video,stop_recording`
 
 ## 💡 Use Case: QA Step in Agent Mode
 
