@@ -90,6 +90,7 @@ if (!isToolFiltered("get_booted_sim_id")) {
         const { id, name } = await getBootedDevice();
 
         return {
+          isError: false,
           content: [
             {
               type: "text",
@@ -99,6 +100,7 @@ if (!isToolFiltered("get_booted_sim_id")) {
         };
       } catch (error: any) {
         return {
+          isError: true,
           content: [
             { type: "text", text: `Error: ${error.message || String(error)}` },
           ],
@@ -127,10 +129,12 @@ if (!isToolFiltered("ui_describe_all")) {
         );
 
         return {
+          isError: false,
           content: [{ type: "text", text: stdout }],
         };
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: "text",
@@ -167,10 +171,12 @@ if (!isToolFiltered("ui_tap")) {
         if (stderr) throw new Error(stderr);
 
         return {
+          isError: false,
           content: [{ type: "text", text: "Tapped successfully" }],
         };
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: "text",
@@ -204,10 +210,12 @@ if (!isToolFiltered("ui_type")) {
         if (stderr) throw new Error(stderr);
 
         return {
+          isError: false,
           content: [{ type: "text", text: "Typed successfully" }],
         };
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: "text",
@@ -252,10 +260,12 @@ if (!isToolFiltered("ui_swipe")) {
         if (stderr) throw new Error(stderr);
 
         return {
+          isError: false,
           content: [{ type: "text", text: "Swiped successfully" }],
         };
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: "text",
@@ -290,10 +300,12 @@ if (!isToolFiltered("ui_describe_point")) {
         if (stderr) throw new Error(stderr);
 
         return {
+          isError: false,
           content: [{ type: "text", text: stdout }],
         };
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: "text",
@@ -375,6 +387,7 @@ if (!isToolFiltered("screenshot")) {
         }
 
         return {
+          isError: false,
           content: [
             {
               type: "text",
@@ -384,6 +397,7 @@ if (!isToolFiltered("screenshot")) {
         };
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: "text",
@@ -474,6 +488,7 @@ if (!isToolFiltered("record_video")) {
         });
 
         return {
+          isError: false,
           content: [
             {
               type: "text",
@@ -483,6 +498,7 @@ if (!isToolFiltered("record_video")) {
         };
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: "text",
@@ -508,6 +524,7 @@ if (!isToolFiltered("stop_recording")) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         return {
+          isError: false,
           content: [
             {
               type: "text",
@@ -517,6 +534,7 @@ if (!isToolFiltered("stop_recording")) {
         };
       } catch (error) {
         return {
+          isError: true,
           content: [
             {
               type: "text",
