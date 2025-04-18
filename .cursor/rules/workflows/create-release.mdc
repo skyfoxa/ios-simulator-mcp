@@ -1,0 +1,85 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Rule: Create GitHub Release from Recent Commits
+
+**Description:** This rule automates the process of creating a GitHub release based on commits since a previous reference point (tag or commit hash). It generates basic release notes, creates the release using the GitHub CLI, and verifies the post-release workflow status.
+
+**Inputs:**
+
+*   `NEW_VERSION`: The version tag for the new release (e.g., `v1.3.1`).
+*   `PREVIOUS_REF`: The tag or commit hash representing the start point for the release notes (e.g., `v1.3.0` or `551551ff`).
+*   `RELEASE_TITLE`: The title for the GitHub release (e.g., `"v1.3.1 - Better Tool Errors & Docs"`).
+
+**Steps:**
+
+1.  **Get Target Commit SHA:**
+    *   Determine the commit hash for the release target (usually HEAD).
+    *   *Successful Command:*
+        ```bash
+        git rev-parse HEAD
+        ```
+    *   Store this SHA for the `--target` argument later. Let's call it `TARGET_SHA`.
+
+2.  **Generate Raw Commit Log:**
+    *   Get a list of commit messages between the previous reference and HEAD.
+    *   *Successful Command:*
+        ```bash
+        git log <PREVIOUS_REF>..HEAD --pretty=format:"%h %s" | cat
+        ```
+    *   *(Replace `<PREVIOUS_REF>` with the actual previous tag/commit)*.
+
+3.  **Format Release Notes (Manual/Template Step):**
+    *   Take the raw commit log from Step 2 and format it into Markdown.
+    *   *Example Structure (based on our final notes):*
+        ```markdown
+        # iOS Simulator MCP <NEW_VERSION>
+
+        ## Improvements
+
+        - **Improved Tool Invocation Error Identification:** Enhanced the system...
+
+        ## Documentation
+
+        - **Added MCP Server Badge:** Included a badge...
+        - **Added Security Policy:** Introduced a `SECURITY.md` file...
+        - **Added License File:** Included the MIT License file...
+
+        ## Build
+
+        - **Version Bump:** Updated the project version to <NEW_VERSION>.
+        ```
+    *   *(This step often requires manual curation to group related commits and write clear descriptions)*.
+
+4.  **Create Temporary Notes File:**
+    *   Save the formatted markdown notes from Step 3 into a temporary file (e.g., `/tmp/release_notes_gh.md`). This avoids shell quoting/escaping issues.
+    *   *Conceptual Command (adapt as needed):*
+        ```bash
+        # (Create the file /tmp/release_notes_gh.md with the content from Step 3)
+        echo -e "..." > /tmp/release_notes_gh.md
+        ```
+
+5.  **Create GitHub Release:**
+    *   Use the `gh` CLI to create the release, referencing the temporary notes file.
+    *   *Successful Command Structure:*
+        ```bash
+        gh release create <NEW_VERSION> --target <TARGET_SHA> --title "<RELEASE_TITLE>" --notes-file /tmp/release_notes_gh.md --latest
+        ```
+    *   *(Replace `<NEW_VERSION>`, `<TARGET_SHA>`, and `<RELEASE_TITLE>` with the actual values)*.
+
+6.  **Clean Up Temporary File:**
+    *   Remove the temporary notes file.
+    *   *Successful Command:*
+        ```bash
+        rm /tmp/release_notes_gh.md
+        ```
+
+7.  **Check Workflow Status:**
+    *   Verify the status of the most recent workflow run (often triggered by the release).
+    *   *Successful Command (with correct quoting for `jq`):*
+        ```bash
+        gh run list --limit 1 --json name,status,conclusion,event,url --jq '.[0]' | cat
+        ```
+    *   Check the `conclusion` field in the output (should ideally be `success`). 
