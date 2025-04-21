@@ -97,72 +97,89 @@ After a feature implementation:
 
 ## Installation
 
-### Option 1: Using NPX (Recommended)
+This section provides instructions for integrating the iOS Simulator MCP server with different Model Context Protocol (MCP) clients.
 
-1. Edit your Cursor MCP configuration:
+### Installation with Cursor
 
-   ```bash
-   cursor ~/.cursor/mcp.json
-   ```
+Cursor manages MCP servers through its configuration file located at `~/.cursor/mcp.json`.
 
-2. Add the iOS simulator server to your configuration:
+#### Option 1: Using NPX (Recommended)
 
-   ```json
-   {
-     "mcpServers": {
-       "ios-simulator": {
-         "command": "npx",
-         "args": ["-y", "ios-simulator-mcp"]
-       }
-     }
-   }
-   ```
+1.  Edit your Cursor MCP configuration file. You can often open it directly from Cursor or use a command like:
+    ```bash
+    # Open with your default editor (or use 'code', 'vim', etc.)
+    open ~/.cursor/mcp.json
+    # Or use Cursor's command if available
+    # cursor ~/.cursor/mcp.json
+    ```
+2.  Add or update the `mcpServers` section with the iOS simulator server configuration:
+    ```json
+    {
+      "mcpServers": {
+        // ... other servers might be listed here ...
+        "ios-simulator": {
+          "command": "npx",
+          "args": ["-y", "ios-simulator-mcp"]
+        }
+      }
+    }
+    ```
+    Ensure the JSON structure is valid, especially if `mcpServers` already exists.
+3.  Restart Cursor for the changes to take effect.
 
-3. Restart Cursor.
+#### Option 2: Local Development
 
-### Option 2: Local Development
+1.  Clone this repository:
+    ```bash
+    git clone https://github.com/joshuayoes/ios-simulator-mcp
+    cd ios-simulator-mcp
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Build the project:
+    ```bash
+    npm run build
+    ```
+4.  Edit your Cursor MCP configuration file (as shown in Option 1).
+5.  Add or update the `mcpServers` section, pointing to your local build:
+    ```json
+    {
+      "mcpServers": {
+        // ... other servers might be listed here ...
+        "ios-simulator": {
+          "command": "node",
+          "args": ["/full/path/to/your/ios-simulator-mcp/build/index.js"]
+        }
+      }
+    }
+    ```
+    **Important:** Replace `/full/path/to/your/` with the absolute path to where you cloned the `ios-simulator-mcp` repository.
+6.  Restart Cursor for the changes to take effect.
 
-1. Clone this repository:
+### Installation with Claude Code
 
-   ```bash
-   git clone https://github.com/joshuayoes/ios-simulator-mcp
-   cd ios-simulator-mcp
-   ```
+Claude Code CLI can manage MCP servers using the `claude mcp` commands or by editing its configuration files directly. For more details on Claude Code MCP configuration, refer to the [official documentation](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/tutorials#set-up-model-context-protocol-mcp).
 
-2. Install dependencies:
+#### Option 1: Using NPX (Recommended)
 
-   ```bash
-   npm install
-   ```
+1.  Add the server using the `claude mcp add` command:
+    ```bash
+    claude mcp add ios-simulator --command npx --args "-y,ios-simulator-mcp"
+    ```
+    _Note: The `--args` parameter takes a single comma-separated string._
+2.  Restart any running Claude Code sessions if necessary.
 
-3. Build the project:
+#### Option 2: Local Development
 
-   ```bash
-   npm run build
-   ```
-
-4. Edit your Cursor MCP configuration:
-
-   ```bash
-   cursor ~/.cursor/mcp.json
-   ```
-
-5. Add the iOS simulator server to your configuration:
-
-   ```json
-   {
-     "mcpServers": {
-       "ios-simulator": {
-         "command": "node",
-         "args": ["/path/to/your/ios-simulator-mcp/build/index.js"]
-       }
-     }
-   }
-   ```
-
-   Replace `"/path/to/your"` with the actual path to your project directory.
-
-6. Restart Cursor.
+1.  Clone this repository, install dependencies, and build the project as described in the Cursor "Local Development" steps 1-3.
+2.  Add the server using the `claude mcp add` command, pointing to your local build:
+    ```bash
+    claude mcp add ios-simulator --command node --args "/full/path/to/your/ios-simulator-mcp/build/index.js"
+    ```
+    **Important:** Replace `/full/path/to/your/` with the absolute path to where you cloned the `ios-simulator-mcp` repository.
+3.  Restart any running Claude Code sessions if necessary.
 
 ## License
 
