@@ -40,6 +40,14 @@ function toError(input: unknown): Error {
   return new Error(JSON.stringify(input));
 }
 
+function troubleshootingLink(): string {
+  return "[Troubleshooting Guide](https://github.com/joshuayoes/ios-simulator-mcp/blob/main/TROUBLESHOOTING.md)";
+}
+
+function errorWithTroubleshooting(message: string): string {
+  return `${message}\n\nFor help, see the ${troubleshootingLink()}`;
+}
+
 async function getBootedDevice() {
   const { stdout, stderr } = await execAsync("xcrun simctl list devices");
 
@@ -102,7 +110,12 @@ if (!isToolFiltered("get_booted_sim_id")) {
         return {
           isError: true,
           content: [
-            { type: "text", text: `Error: ${error.message || String(error)}` },
+            {
+              type: "text",
+              text: errorWithTroubleshooting(
+                `Error: ${error.message || String(error)}`
+              ),
+            },
           ],
         };
       }
@@ -138,7 +151,9 @@ if (!isToolFiltered("ui_describe_all")) {
           content: [
             {
               type: "text",
-              text: `Error describing all of the ui: ${toError(error).message}`,
+              text: errorWithTroubleshooting(
+                `Error describing all of the ui: ${toError(error).message}`
+              ),
             },
           ],
         };
@@ -180,7 +195,9 @@ if (!isToolFiltered("ui_tap")) {
           content: [
             {
               type: "text",
-              text: `Error tapping on the screen: ${toError(error).message}`,
+              text: errorWithTroubleshooting(
+                `Error tapping on the screen: ${toError(error).message}`
+              ),
             },
           ],
         };
@@ -219,9 +236,11 @@ if (!isToolFiltered("ui_type")) {
           content: [
             {
               type: "text",
-              text: `Error typing text into the iOS Simulator: ${
-                toError(error).message
-              }`,
+              text: errorWithTroubleshooting(
+                `Error typing text into the iOS Simulator: ${
+                  toError(error).message
+                }`
+              ),
             },
           ],
         };
@@ -269,7 +288,9 @@ if (!isToolFiltered("ui_swipe")) {
           content: [
             {
               type: "text",
-              text: `Error swiping on the screen: ${toError(error).message}`,
+              text: errorWithTroubleshooting(
+                `Error swiping on the screen: ${toError(error).message}`
+              ),
             },
           ],
         };
@@ -309,9 +330,11 @@ if (!isToolFiltered("ui_describe_point")) {
           content: [
             {
               type: "text",
-              text: `Error describing point (${x}, ${y}): ${
-                toError(error).message
-              }`,
+              text: errorWithTroubleshooting(
+                `Error describing point (${x}, ${y}): ${
+                  toError(error).message
+                }`
+              ),
             },
           ],
         };
@@ -401,7 +424,9 @@ if (!isToolFiltered("screenshot")) {
           content: [
             {
               type: "text",
-              text: `Error taking screenshot: ${toError(error).message}`,
+              text: errorWithTroubleshooting(
+                `Error taking screenshot: ${toError(error).message}`
+              ),
             },
           ],
         };
@@ -502,7 +527,9 @@ if (!isToolFiltered("record_video")) {
           content: [
             {
               type: "text",
-              text: `Error starting recording: ${toError(error).message}`,
+              text: errorWithTroubleshooting(
+                `Error starting recording: ${toError(error).message}`
+              ),
             },
           ],
         };
@@ -538,7 +565,9 @@ if (!isToolFiltered("stop_recording")) {
           content: [
             {
               type: "text",
-              text: `Error stopping recording: ${toError(error).message}`,
+              text: errorWithTroubleshooting(
+                `Error stopping recording: ${toError(error).message}`
+              ),
             },
           ],
         };
