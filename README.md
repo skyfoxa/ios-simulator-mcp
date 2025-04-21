@@ -28,16 +28,13 @@ https://github.com/user-attachments/assets/453ebe7b-cc93-4ac2-b08d-0f8ac8339ad3
 
 - `IOS_SIMULATOR_MCP_FILTERED_TOOLS`: A comma-separated list of tool names to filter out from being registered. For example: `screenshot,record_video,stop_recording`
 
-## 💡 Use Case: QA Step in Agent Mode
+## 💡 Use Case: QA Step via MCP Tool Calls
 
-This MCP can be used effectively in agent mode as a Quality Assurance step immediately after implementing features, ensuring UI consistency and correct behavior.
+This MCP server allows AI assistants integrated with a Model Context Protocol (MCP) client to perform Quality Assurance tasks by making tool calls. This is useful immediately after implementing features to help ensure UI consistency and correct behavior.
 
 ### How to Use
 
-After a feature implementation:
-
-1. Activate agent mode in Cursor.
-2. Use the prompts below to quickly validate and document UI interactions.
+After a feature implementation, instruct your AI assistant within its MCP client environment to use the available tools. For example, in Cursor's agent mode, you could use the prompts below to quickly validate and document UI interactions.
 
 ### Example Prompts
 
