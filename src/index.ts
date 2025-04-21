@@ -106,14 +106,14 @@ if (!isToolFiltered("get_booted_sim_id")) {
             },
           ],
         };
-      } catch (error: any) {
+      } catch (error) {
         return {
           isError: true,
           content: [
             {
               type: "text",
               text: errorWithTroubleshooting(
-                `Error: ${error.message || String(error)}`
+                `Error: ${toError(error).message}`
               ),
             },
           ],
