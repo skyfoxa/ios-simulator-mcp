@@ -54,18 +54,19 @@ alwaysApply: false
     *   *(This step often requires manual curation to group related commits and write clear descriptions)*.
 
 4.  **Create Temporary Notes File:**
-    *   Save the formatted markdown notes from Step 3 into a temporary file (e.g., `/tmp/release_notes_gh.md`). This avoids shell quoting/escaping issues.
+    *   Save the formatted markdown notes from Step 3 into a temporary file (e.g., `TEMP.md`). This avoids shell quoting/escaping issues.
     *   *Conceptual Command (adapt as needed):*
         ```bash
-        # (Create the file /tmp/release_notes_gh.md with the content from Step 3)
-        echo -e "..." > /tmp/release_notes_gh.md
+        # (Create the file TEMP.md with the content from Step 3)
+        echo -e "..." > TEMP.md
         ```
+    * STOP and ask the User to review before proceeding
 
 5.  **Create GitHub Release:**
     *   Use the `gh` CLI to create the release, referencing the temporary notes file.
     *   *Successful Command Structure:*
         ```bash
-        gh release create <NEW_VERSION> --target <TARGET_SHA> --title "<RELEASE_TITLE>" --notes-file /tmp/release_notes_gh.md --latest
+        gh release create <NEW_VERSION> --target <TARGET_SHA> --title "<RELEASE_TITLE>" --notes-file TEMP.md --latest
         ```
     *   *(Replace `<NEW_VERSION>`, `<TARGET_SHA>`, and `<RELEASE_TITLE>` with the actual values)*.
 
@@ -73,7 +74,7 @@ alwaysApply: false
     *   Remove the temporary notes file.
     *   *Successful Command:*
         ```bash
-        rm /tmp/release_notes_gh.md
+        rm TEMP.md
         ```
 
 7.  **Check Workflow Status:**
