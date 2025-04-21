@@ -3,15 +3,15 @@ description:
 globs: 
 alwaysApply: false
 ---
-# Rule: Create GitHub Release from Recent Commits
+# Rule: Create GitHub Release from Changes Since Last Tag
 
 **Description:** This rule automates the process of creating a GitHub release based on commits since a previous reference point (tag or commit hash). It generates basic release notes, creates the release using the GitHub CLI, and verifies the post-release workflow status.
 
 **Inputs:**
 
-*   `NEW_VERSION`: The version tag for the new release (e.g., `v1.3.1`).
-*   `PREVIOUS_REF`: The tag or commit hash representing the start point for the release notes (e.g., `v1.3.0` or `551551ff`).
-*   `RELEASE_TITLE`: The title for the GitHub release (e.g., `"v1.3.1 - Better Tool Errors & Docs"`).
+*   `NEW_VERSION`: The version tag for the new release (e.g., `v1.3.1`). Look in the package.json version key for a hint.
+*   `PREVIOUS_REF`: The tag or commit hash representing the start point for the release notes (e.g., `v1.3.0` or `551551ff`). Try `git describe --tags --abbrev=0` for a hint. 
+*   `RELEASE_TITLE`: The title for the GitHub release (e.g., `"v1.3.1 - Better Tool Errors & Docs"`). Use `<NEW_VERSION> - <SUMMARY>` as a format. Use `git log` and look for the most significant change and describe in 5 words or less. Consider adding an emoji at the end if it matches well.
 
 **Steps:**
 
@@ -23,19 +23,23 @@ alwaysApply: false
         ```
     *   Store this SHA for the `--target` argument later. Let's call it `TARGET_SHA`.
 
-2.  **Generate Raw Commit Log:**
-    *   Get a list of commit messages between the previous reference and HEAD.
+2.  **Get Git Diff:**
+    *   Look at all the changes between the previous reference and HEAD.
     *   *Successful Command:*
         ```bash
-        git log <PREVIOUS_REF>..HEAD --pretty=format:"%h %s" | cat
+        git --no-pager diff <PREVIOUS_REF>
         ```
     *   *(Replace `<PREVIOUS_REF>` with the actual previous tag/commit)*.
 
 3.  **Format Release Notes (Manual/Template Step):**
-    *   Take the raw commit log from Step 2 and format it into Markdown.
-    *   *Example Structure (based on our final notes):*
+    *   Take the raw git diff from Step 2 and format it into Markdown.
+    *   *Example Structure:*
         ```markdown
         # iOS Simulator MCP <NEW_VERSION>
+
+        ## Features 
+
+        - **Screenshot Tool:** Added screenshot tool... 
 
         ## Improvements
 
@@ -51,7 +55,6 @@ alwaysApply: false
 
         - **Version Bump:** Updated the project version to <NEW_VERSION>.
         ```
-    *   *(This step often requires manual curation to group related commits and write clear descriptions)*.
 
 4.  **Create Temporary Notes File:**
     *   Save the formatted markdown notes from Step 3 into a temporary file (e.g., `TEMP.md`). This avoids shell quoting/escaping issues.
@@ -60,7 +63,7 @@ alwaysApply: false
         # (Create the file TEMP.md with the content from Step 3)
         echo -e "..." > TEMP.md
         ```
-    * STOP and ask the User to review before proceeding
+    * STOP and ask the User to review before proceeding. This is **very important**, creating a release will trigger a GitHub action that is too fast to cancel if triggered by mistake.
 
 5.  **Create GitHub Release:**
     *   Use the `gh` CLI to create the release, referencing the temporary notes file.
