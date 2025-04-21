@@ -41,7 +41,7 @@ function toError(input: unknown): Error {
 }
 
 function troubleshootingLink(): string {
-  return "[Troubleshooting Guide](https://github.com/joshuayoes/ios-simulator-mcp/blob/main/TROUBLESHOOTING.md)";
+  return "[Troubleshooting Guide](https://github.com/joshuayoes/ios-simulator-mcp/blob/main/TROUBLESHOOTING.md) | [Plain Text Guide for LLMs](https://raw.githubusercontent.com/joshuayoes/ios-simulator-mcp/refs/heads/main/TROUBLESHOOTING.md)";
 }
 
 function errorWithTroubleshooting(message: string): string {
@@ -331,9 +331,7 @@ if (!isToolFiltered("ui_describe_point")) {
             {
               type: "text",
               text: errorWithTroubleshooting(
-                `Error describing point (${x}, ${y}): ${
-                  toError(error).message
-                }`
+                `Error describing point (${x}, ${y}): ${toError(error).message}`
               ),
             },
           ],
