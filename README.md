@@ -163,9 +163,8 @@ Claude Code CLI can manage MCP servers using the `claude mcp` commands or by edi
 
 1.  Add the server using the `claude mcp add` command:
     ```bash
-    claude mcp add ios-simulator --command npx --args "-y,ios-simulator-mcp"
+    claude mcp add ios-simulator npx ios-simulator-mcp
     ```
-    _Note: The `--args` parameter takes a single comma-separated string._
 2.  Restart any running Claude Code sessions if necessary.
 
 #### Option 2: Local Development
