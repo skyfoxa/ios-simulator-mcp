@@ -219,9 +219,13 @@ if (!isToolFiltered("ui_tap")) {
           "--udid",
           actualUdid,
           ...(duration ? ["--duration", duration] : []),
+          "--json",
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
           String(x),
           String(y),
-          "--json",
         ];
 
         const { stderr } = await run("idb", args);
@@ -269,7 +273,17 @@ if (!isToolFiltered("ui_type")) {
       try {
         const actualUdid = await getBootedDeviceId(udid);
 
-        const args = ["ui", "text", text, "--udid", actualUdid];
+        const args = [
+          "ui",
+          "text",
+          "--udid",
+          actualUdid,
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          text,
+        ];
 
         const { stderr } = await run("idb", args);
 
@@ -328,11 +342,15 @@ if (!isToolFiltered("ui_swipe")) {
           "--udid",
           actualUdid,
           ...(delta ? ["--delta", String(delta)] : []),
+          "--json",
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
           String(x_start),
           String(y_start),
           String(x_end),
           String(y_end),
-          "--json",
         ];
 
         const { stderr } = await run("idb", args);
@@ -382,9 +400,13 @@ if (!isToolFiltered("ui_describe_point")) {
           "describe-point",
           "--udid",
           actualUdid,
+          "--json",
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
           String(x),
           String(y),
-          "--json",
         ];
 
         const { stdout, stderr } = await run("idb", args);
