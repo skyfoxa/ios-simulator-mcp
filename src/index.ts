@@ -213,7 +213,7 @@ if (!isToolFiltered("ui_tap")) {
       try {
         const actualUdid = await getBootedDeviceId(udid);
 
-        const args = [
+        const { stderr } = await run("idb", [
           "ui",
           "tap",
           "--udid",
@@ -226,9 +226,7 @@ if (!isToolFiltered("ui_tap")) {
           "--",
           String(x),
           String(y),
-        ];
-
-        const { stderr } = await run("idb", args);
+        ]);
 
         if (stderr) throw new Error(stderr);
 
@@ -273,7 +271,7 @@ if (!isToolFiltered("ui_type")) {
       try {
         const actualUdid = await getBootedDeviceId(udid);
 
-        const args = [
+        const { stderr } = await run("idb", [
           "ui",
           "text",
           "--udid",
@@ -283,9 +281,7 @@ if (!isToolFiltered("ui_type")) {
           // This prevents the shell from misinterpreting the arguments as options.
           "--",
           text,
-        ];
-
-        const { stderr } = await run("idb", args);
+        ]);
 
         if (stderr) throw new Error(stderr);
 
@@ -336,7 +332,7 @@ if (!isToolFiltered("ui_swipe")) {
       try {
         const actualUdid = await getBootedDeviceId(udid);
 
-        const args = [
+        const { stderr } = await run("idb", [
           "ui",
           "swipe",
           "--udid",
@@ -351,9 +347,7 @@ if (!isToolFiltered("ui_swipe")) {
           String(y_start),
           String(x_end),
           String(y_end),
-        ];
-
-        const { stderr } = await run("idb", args);
+        ]);
 
         if (stderr) throw new Error(stderr);
 
@@ -395,7 +389,7 @@ if (!isToolFiltered("ui_describe_point")) {
       try {
         const actualUdid = await getBootedDeviceId(udid);
 
-        const args = [
+        const { stdout, stderr } = await run("idb", [
           "ui",
           "describe-point",
           "--udid",
@@ -407,9 +401,7 @@ if (!isToolFiltered("ui_describe_point")) {
           "--",
           String(x),
           String(y),
-        ];
-
-        const { stdout, stderr } = await run("idb", args);
+        ]);
 
         if (stderr) throw new Error(stderr);
 
