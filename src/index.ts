@@ -480,14 +480,21 @@ if (!isToolFiltered("screenshot")) {
         const actualUdid = await getBootedDeviceId(udid);
         const absolutePath = ensureAbsolutePath(output_path);
 
-        const args = ["simctl", "io", actualUdid, "screenshot", absolutePath];
-
-        if (type) args.push(`--type=${type}`);
-        if (display) args.push(`--display=${display}`);
-        if (mask) args.push(`--mask=${mask}`);
-
         // command is weird, it responds with stderr on success and stdout is blank
-        const { stderr: stdout } = await run("xcrun", args);
+        const { stderr: stdout } = await run("xcrun", [
+          "simctl",
+          "io",
+          actualUdid,
+          "screenshot",
+          ...(type ? [`--type=${type}`] : []),
+          ...(display ? [`--display=${display}`] : []),
+          ...(mask ? [`--mask=${mask}`] : []),
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          absolutePath,
+        ]);
 
         // throw if we don't get the expected success message
         if (stdout && !stdout.includes("Wrote screenshot to")) {
@@ -562,18 +569,22 @@ if (!isToolFiltered("record_video")) {
         const defaultFileName = `simulator_recording_${Date.now()}.mp4`;
         const outputFile = ensureAbsolutePath(output_path ?? defaultFileName);
 
-        // Build command arguments array
-        const args = ["simctl", "io", "booted", "recordVideo"];
-
-        if (codec) args.push(`--codec=${codec}`);
-        if (display) args.push(`--display=${display}`);
-        if (mask) args.push(`--mask=${mask}`);
-        if (force) args.push("--force");
-
-        args.push(outputFile);
-
         // Start the recording process
-        const recordingProcess = spawn("xcrun", args);
+        const recordingProcess = spawn("xcrun", [
+          "simctl",
+          "io",
+          "booted",
+          "recordVideo",
+          ...(codec ? [`--codec=${codec}`] : []),
+          ...(display ? [`--display=${display}`] : []),
+          ...(mask ? [`--mask=${mask}`] : []),
+          ...(force ? ["--force"] : []),
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          outputFile,
+        ]);
 
         // Wait for recording to start
         await new Promise((resolve, reject) => {
