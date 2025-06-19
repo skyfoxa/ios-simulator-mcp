@@ -17,7 +17,7 @@ You can run a test case copy and pasting the test case into a chat in an MCP cli
 9. Call `ui_describe_all` to describe the page and find the first photo result.
 10. Call `ui_describe_point` to find the x and y coordinates for the first photo result touchable area.
 11. Call `ui_tap` to tap the coordinates of the first photo result touchable area
-12. Call `ui_swipe` to swipe right to left in the center of the screen.
-13. Call `ui_describe_all` to describe the page and see we are on the next photo result.
+12. Call `ui_swipe` to swipe from the center of the screen down to dismiss the photo and go back to the All Photos tab.
+13. Call `ui_describe_all` to describe the page and see we are the All Photos tab.
 14. Call `screenshot` to take a screenshot of the current page.
 15. Call `stop_recording` to stop the screen recording.
