@@ -15,7 +15,7 @@ currently being supported with security updates.
 ### Command Injection (Fixed in v1.3.3)
 
 **CVE**: To be assigned  
-**Severity**: High  
+**Severity**: Moderate  
 **Fixed in**: v1.3.3 (2025)
 
 **Description**: Previous versions contained command injection vulnerabilities in several MCP tools (ui_tap, ui_type, ui_swipe, ui_describe_point, ui_describe_all, screenshot, record_video, stop_recording) due to unsafe shell command construction using string interpolation.
