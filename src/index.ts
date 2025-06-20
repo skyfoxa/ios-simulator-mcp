@@ -2,13 +2,36 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { exec, spawn } from "child_process";
+import { execFile, spawn } from "child_process";
 import { promisify } from "util";
 import { z } from "zod";
 import path from "path";
 import os from "os";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+
+/**
+ * Strict UDID/UUID pattern: 8-4-4-4-12 hexadecimal characters (e.g. 37A360EC-75F9-4AEC-8EFA-10F4A58D8CCA)
+ */
+const UDID_REGEX =
+  /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/;
+
+/**
+ * Runs a command with arguments and returns the stdout and stderr
+ * @param cmd - The command to run
+ * @param args - The arguments to pass to the command
+ * @returns The stdout and stderr of the command
+ */
+async function run(
+  cmd: string,
+  args: string[]
+): Promise<{ stdout: string; stderr: string }> {
+  const { stdout, stderr } = await execFileAsync(cmd, args, { shell: false });
+  return {
+    stdout: stdout.trim(),
+    stderr: stderr.trim(),
+  };
+}
 
 // Read filtered tools from environment variable
 const FILTERED_TOOLS =
@@ -49,7 +72,7 @@ function errorWithTroubleshooting(message: string): string {
 }
 
 async function getBootedDevice() {
-  const { stdout, stderr } = await execAsync("xcrun simctl list devices");
+  const { stdout, stderr } = await run("xcrun", ["simctl", "list", "devices"]);
 
   if (stderr) throw new Error(stderr);
 
@@ -130,6 +153,7 @@ if (!isToolFiltered("ui_describe_all")) {
     {
       udid: z
         .string()
+        .regex(UDID_REGEX)
         .optional()
         .describe("Udid of target, can also be set with the IDB_UDID env var"),
     },
@@ -137,9 +161,14 @@ if (!isToolFiltered("ui_describe_all")) {
       try {
         const actualUdid = await getBootedDeviceId(udid);
 
-        const { stdout } = await execAsync(
-          `idb ui describe-all --udid ${actualUdid} --json --nested`
-        );
+        const { stdout } = await run("idb", [
+          "ui",
+          "describe-all",
+          "--udid",
+          actualUdid,
+          "--json",
+          "--nested",
+        ]);
 
         return {
           isError: false,
@@ -167,9 +196,14 @@ if (!isToolFiltered("ui_tap")) {
     "ui_tap",
     "Tap on the screen in the iOS Simulator",
     {
-      duration: z.string().optional().describe("Press duration"),
+      duration: z
+        .string()
+        .regex(/^\d+(\.\d+)?$/)
+        .optional()
+        .describe("Press duration"),
       udid: z
         .string()
+        .regex(UDID_REGEX)
         .optional()
         .describe("Udid of target, can also be set with the IDB_UDID env var"),
       x: z.number().describe("The x-coordinate"),
@@ -178,10 +212,21 @@ if (!isToolFiltered("ui_tap")) {
     async ({ duration, udid, x, y }) => {
       try {
         const actualUdid = await getBootedDeviceId(udid);
-        const durationArg = duration ? `--duration ${duration}` : "";
-        const { stderr } = await execAsync(
-          `idb ui tap --udid ${actualUdid} ${durationArg} ${x} ${y}  --json`
-        );
+
+        const { stderr } = await run("idb", [
+          "ui",
+          "tap",
+          "--udid",
+          actualUdid,
+          ...(duration ? ["--duration", duration] : []),
+          "--json",
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          String(x),
+          String(y),
+        ]);
 
         if (stderr) throw new Error(stderr);
 
@@ -213,16 +258,30 @@ if (!isToolFiltered("ui_type")) {
     {
       udid: z
         .string()
+        .regex(UDID_REGEX)
         .optional()
         .describe("Udid of target, can also be set with the IDB_UDID env var"),
-      text: z.string().describe("Text to input"),
+      text: z
+        .string()
+        .max(500)
+        .regex(/^[\x20-\x7E]+$/)
+        .describe("Text to input"),
     },
     async ({ udid, text }) => {
       try {
         const actualUdid = await getBootedDeviceId(udid);
-        const { stderr } = await execAsync(
-          `idb ui text ${text} --udid ${actualUdid}`
-        );
+
+        const { stderr } = await run("idb", [
+          "ui",
+          "text",
+          "--udid",
+          actualUdid,
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          text,
+        ]);
 
         if (stderr) throw new Error(stderr);
 
@@ -256,6 +315,7 @@ if (!isToolFiltered("ui_swipe")) {
     {
       udid: z
         .string()
+        .regex(UDID_REGEX)
         .optional()
         .describe("Udid of target, can also be set with the IDB_UDID env var"),
       x_start: z.number().describe("The starting x-coordinate"),
@@ -271,10 +331,23 @@ if (!isToolFiltered("ui_swipe")) {
     async ({ udid, x_start, y_start, x_end, y_end, delta }) => {
       try {
         const actualUdid = await getBootedDeviceId(udid);
-        const deltaArg = delta ? `--delta ${delta}` : "";
-        const { stderr } = await execAsync(
-          `idb ui swipe --udid ${actualUdid} ${deltaArg} ${x_start} ${y_start} ${x_end} ${y_end} --json`
-        );
+
+        const { stderr } = await run("idb", [
+          "ui",
+          "swipe",
+          "--udid",
+          actualUdid,
+          ...(delta ? ["--delta", String(delta)] : []),
+          "--json",
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          String(x_start),
+          String(y_start),
+          String(x_end),
+          String(y_end),
+        ]);
 
         if (stderr) throw new Error(stderr);
 
@@ -306,6 +379,7 @@ if (!isToolFiltered("ui_describe_point")) {
     {
       udid: z
         .string()
+        .regex(UDID_REGEX)
         .optional()
         .describe("Udid of target, can also be set with the IDB_UDID env var"),
       x: z.number().describe("The x-coordinate"),
@@ -314,9 +388,20 @@ if (!isToolFiltered("ui_describe_point")) {
     async ({ udid, x, y }) => {
       try {
         const actualUdid = await getBootedDeviceId(udid);
-        const { stdout, stderr } = await execAsync(
-          `idb ui describe-point --udid ${actualUdid} ${x} ${y} --json`
-        );
+
+        const { stdout, stderr } = await run("idb", [
+          "ui",
+          "describe-point",
+          "--udid",
+          actualUdid,
+          "--json",
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          String(x),
+          String(y),
+        ]);
 
         if (stderr) throw new Error(stderr);
 
@@ -362,10 +447,12 @@ if (!isToolFiltered("screenshot")) {
     {
       udid: z
         .string()
+        .regex(UDID_REGEX)
         .optional()
         .describe("Udid of target, can also be set with the IDB_UDID env var"),
       output_path: z
         .string()
+        .max(1024)
         .describe(
           "File path where the screenshot will be saved (if relative, ~/Downloads will be used as base directory)"
         ),
@@ -393,14 +480,21 @@ if (!isToolFiltered("screenshot")) {
         const actualUdid = await getBootedDeviceId(udid);
         const absolutePath = ensureAbsolutePath(output_path);
 
-        let command = `xcrun simctl io ${actualUdid} screenshot ${absolutePath}`;
-
-        if (type) command += ` --type=${type}`;
-        if (display) command += ` --display=${display}`;
-        if (mask) command += ` --mask=${mask}`;
-
         // command is weird, it responds with stderr on success and stdout is blank
-        const { stderr: stdout } = await execAsync(command);
+        const { stderr: stdout } = await run("xcrun", [
+          "simctl",
+          "io",
+          actualUdid,
+          "screenshot",
+          ...(type ? [`--type=${type}`] : []),
+          ...(display ? [`--display=${display}`] : []),
+          ...(mask ? [`--mask=${mask}`] : []),
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          absolutePath,
+        ]);
 
         // throw if we don't get the expected success message
         if (stdout && !stdout.includes("Wrote screenshot to")) {
@@ -440,6 +534,7 @@ if (!isToolFiltered("record_video")) {
     {
       output_path: z
         .string()
+        .max(1024)
         .optional()
         .describe(
           `Optional output path (defaults to ~/Downloads/simulator_recording_$DATE.mp4)`
@@ -474,18 +569,22 @@ if (!isToolFiltered("record_video")) {
         const defaultFileName = `simulator_recording_${Date.now()}.mp4`;
         const outputFile = ensureAbsolutePath(output_path ?? defaultFileName);
 
-        // Build command arguments array
-        const args = ["simctl", "io", "booted", "recordVideo"];
-
-        if (codec) args.push(`--codec=${codec}`);
-        if (display) args.push(`--display=${display}`);
-        if (mask) args.push(`--mask=${mask}`);
-        if (force) args.push("--force");
-
-        args.push(outputFile);
-
         // Start the recording process
-        const recordingProcess = spawn("xcrun", args);
+        const recordingProcess = spawn("xcrun", [
+          "simctl",
+          "io",
+          "booted",
+          "recordVideo",
+          ...(codec ? [`--codec=${codec}`] : []),
+          ...(display ? [`--display=${display}`] : []),
+          ...(mask ? [`--mask=${mask}`] : []),
+          ...(force ? ["--force"] : []),
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          outputFile,
+        ]);
 
         // Wait for recording to start
         await new Promise((resolve, reject) => {
@@ -543,7 +642,7 @@ if (!isToolFiltered("stop_recording")) {
     {},
     async () => {
       try {
-        await execAsync('pkill -SIGINT -f "simctl.*recordVideo"');
+        await run("pkill", ["-SIGINT", "-f", "simctl.*recordVideo"]);
 
         // Wait a moment for the video to finalize
         await new Promise((resolve) => setTimeout(resolve, 1000));
