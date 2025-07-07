@@ -22,6 +22,7 @@ https://github.com/user-attachments/assets/453ebe7b-cc93-4ac2-b08d-0f8ac8339ad3
   - Swipe between coordinates
   - Get information about UI elements at specific coordinates
   - Take screenshots of the simulator screen
+  - Show a view of the simulator screen to your AI agent
 - Filter specific tools using environment variables
 
 ## Configuration
@@ -68,6 +69,12 @@ After a feature implementation, instruct your AI assistant within its MCP client
 
   ```
   Describe the UI element at position x=300, y=350 to ensure proper labeling and functionality
+  ```
+
+- **Show Your AI Agent the Simulator Screen:**
+
+  ```
+  View the current simulator screen
   ```
 
 - **Take Screenshot:**
