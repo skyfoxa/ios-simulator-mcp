@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { z } from "zod";
 import path from "path";
 import os from "os";
+import fs from "fs";
 
 const execFileAsync = promisify(execFile);
 
@@ -15,6 +16,10 @@ const execFileAsync = promisify(execFile);
  */
 const UDID_REGEX =
   /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/;
+
+const TMP_ROOT_DIR = fs.mkdtempSync(
+  path.join(os.tmpdir(), "ios-simulator-mcp-")
+);
 
 /**
  * Runs a command with arguments and returns the stdout and stderr
@@ -426,6 +431,90 @@ if (!isToolFiltered("ui_describe_point")) {
   );
 }
 
+if (!isToolFiltered("ui_view")) {
+  server.tool(
+    "ui_view",
+    "Get the image content of a compressed screenshot of the current simulator view",
+    {
+      udid: z
+        .string()
+        .regex(UDID_REGEX)
+        .optional()
+        .describe("Udid of target, can also be set with the IDB_UDID env var"),
+    },
+    async ({ udid }) => {
+      try {
+        const actualUdid = await getBootedDeviceId(udid);
+
+        // Generate unique file names with timestamp
+        const ts = Date.now();
+        const rawPng = path.join(TMP_ROOT_DIR, `ui-view-${ts}-raw.png`);
+        const compressedJpg = path.join(
+          TMP_ROOT_DIR,
+          `ui-view-${ts}-compressed.jpg`
+        );
+
+        // Capture screenshot as PNG
+        await run("xcrun", [
+          "simctl",
+          "io",
+          actualUdid,
+          "screenshot",
+          "--type=png",
+          "--",
+          rawPng,
+        ]);
+
+        // Compress to JPEG using sips
+        await run("sips", [
+          "-Z",
+          "1568", // max 1568 px tall
+          "-s",
+          "format",
+          "jpeg",
+          "-s",
+          "formatOptions",
+          "80", // 80% quality
+          rawPng,
+          "--out",
+          compressedJpg,
+        ]);
+
+        // Read and encode the compressed image
+        const imageData = fs.readFileSync(compressedJpg);
+        const base64Data = imageData.toString("base64");
+
+        return {
+          isError: false,
+          content: [
+            {
+              type: "image",
+              data: base64Data,
+              mimeType: "image/jpeg",
+            },
+            {
+              type: "text",
+              text: "Screenshot captured",
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: errorWithTroubleshooting(
+                `Error capturing screenshot: ${toError(error).message}`
+              ),
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
 function ensureAbsolutePath(filePath: string): string {
   if (path.isAbsolute(filePath)) {
     return filePath;
@@ -683,4 +772,9 @@ runServer().catch(console.error);
 process.stdin.on("close", () => {
   console.log("iOS Simulator MCP Server closed");
   server.close();
+  try {
+    fs.rmSync(TMP_ROOT_DIR, { recursive: true, force: true });
+  } catch (error) {
+    // Ignore cleanup errors
+  }
 });
