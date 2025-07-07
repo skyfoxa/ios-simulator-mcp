@@ -20,4 +20,5 @@ You can run a test case copy and pasting the test case into a chat in an MCP cli
 12. Call `ui_swipe` to swipe from the center of the screen down to dismiss the photo and go back to the All Photos tab.
 13. Call `ui_describe_all` to describe the page and see we are the All Photos tab.
 14. Call `screenshot` to take a screenshot of the current page.
-15. Call `stop_recording` to stop the screen recording.
+15. Call `ui_view` to view the current page.
+16. Call `stop_recording` to stop the screen recording.
