@@ -8,18 +8,187 @@ A Model Context Protocol (MCP) server for interacting with iOS simulators. This 
 
 https://github.com/user-attachments/assets/453ebe7b-cc93-4ac2-b08d-0f8ac8339ad3
 
-## Features
+## Tools
 
-- Get the ID of the currently booted iOS simulator
-- Interact with the simulator UI:
-  - Describe all accessibility elements on screen
-  - Tap on screen coordinates
-  - Input text
-  - Swipe between coordinates
-  - Get information about UI elements at specific coordinates
-  - Take screenshots of the simulator screen
-  - Show a view of the simulator screen to your AI agent
-- Filter specific tools using environment variables
+### `get_booted_sim_id`
+
+**Description:** Get the ID of the currently booted iOS simulator
+
+**Parameters:** No Parameters
+
+### `ui_describe_all`
+
+**Description:** Describes accessibility information for the entire screen in the iOS Simulator
+
+**Parameters:**
+
+```typescript
+{
+  /**
+   * Udid of target, can also be set with the IDB_UDID env var
+   * Format: UUID (8-4-4-4-12 hexadecimal characters)
+   */
+  udid?: string;
+}
+```
+
+### `ui_tap`
+
+**Description:** Tap on the screen in the iOS Simulator
+
+**Parameters:**
+
+```typescript
+{
+  /**
+   * Press duration in seconds (decimal numbers allowed)
+   */
+  duration?: string;
+  /**
+   * Udid of target, can also be set with the IDB_UDID env var
+   * Format: UUID (8-4-4-4-12 hexadecimal characters)
+   */
+  udid?: string;
+  /** The x-coordinate */
+  x: number;
+  /** The y-coordinate */
+  y: number;
+}
+```
+
+### `ui_type`
+
+**Description:** Input text into the iOS Simulator
+
+**Parameters:**
+
+```typescript
+{
+  /**
+   * Udid of target, can also be set with the IDB_UDID env var
+   * Format: UUID (8-4-4-4-12 hexadecimal characters)
+   */
+  udid?: string;
+  /**
+   * Text to input
+   * Format: ASCII printable characters only
+   */
+  text: string;
+}
+```
+
+### `ui_swipe`
+
+**Description:** Swipe on the screen in the iOS Simulator
+
+**Parameters:**
+
+```typescript
+{
+  /**
+   * Udid of target, can also be set with the IDB_UDID env var
+   * Format: UUID (8-4-4-4-12 hexadecimal characters)
+   */
+  udid?: string;
+  /** The starting x-coordinate */
+  x_start: number;
+  /** The starting y-coordinate */
+  y_start: number;
+  /** The ending x-coordinate */
+  x_end: number;
+  /** The ending y-coordinate */
+  y_end: number;
+  /** The size of each step in the swipe (default is 1) */
+  delta?: number;
+}
+```
+
+### `ui_describe_point`
+
+**Description:** Returns the accessibility element at given co-ordinates on the iOS Simulator's screen
+
+**Parameters:**
+
+```typescript
+{
+  /**
+   * Udid of target, can also be set with the IDB_UDID env var
+   * Format: UUID (8-4-4-4-12 hexadecimal characters)
+   */
+  udid?: string;
+  /** The x-coordinate */
+  x: number;
+  /** The y-coordinate */
+  y: number;
+}
+```
+
+### `ui_view`
+
+**Description:** Get the image content of a compressed screenshot of the current simulator view
+
+**Parameters:**
+
+```typescript
+{
+  /**
+   * Udid of target, can also be set with the IDB_UDID env var
+   * Format: UUID (8-4-4-4-12 hexadecimal characters)
+   */
+  udid?: string;
+}
+```
+
+### `screenshot`
+
+**Description:** Takes a screenshot of the iOS Simulator
+
+**Parameters:**
+
+```typescript
+{
+  /**
+   * Udid of target, can also be set with the IDB_UDID env var
+   * Format: UUID (8-4-4-4-12 hexadecimal characters)
+   */
+  udid?: string;
+  /** File path where the screenshot will be saved. If relative, it uses the directory specified by the `IOS_SIMULATOR_MCP_DEFAULT_OUTPUT_DIR` env var, or `~/Downloads` if not set. */
+  output_path: string;
+  /** Image format (png, tiff, bmp, gif, or jpeg). Default is png. */
+  type?: "png" | "tiff" | "bmp" | "gif" | "jpeg";
+  /** Display to capture (internal or external). Default depends on device type. */
+  display?: "internal" | "external";
+  /** For non-rectangular displays, handle the mask by policy (ignored, alpha, or black) */
+  mask?: "ignored" | "alpha" | "black";
+}
+```
+
+### `record_video`
+
+**Description:** Records a video of the iOS Simulator using simctl directly
+
+**Parameters:**
+
+```typescript
+{
+  /** Optional output path. If not provided, a default name will be used. The file will be saved in the directory specified by `IOS_SIMULATOR_MCP_DEFAULT_OUTPUT_DIR` or in `~/Downloads` if the environment variable is not set. */
+  output_path?: string;
+  /** Specifies the codec type: "h264" or "hevc". Default is "hevc". */
+  codec?: "h264" | "hevc";
+  /** Display to capture: "internal" or "external". Default depends on device type. */
+  display?: "internal" | "external";
+  /** For non-rectangular displays, handle the mask by policy: "ignored", "alpha", or "black". */
+  mask?: "ignored" | "alpha" | "black";
+  /** Force the output file to be written to, even if the file already exists. */
+  force?: boolean;
+}
+```
+
+### `stop_recording`
+
+**Description:** Stops the simulator video recording using killall
+
+**Parameters:** No Parameters
 
 ## 💡 Use Case: QA Step via MCP Tool Calls
 
