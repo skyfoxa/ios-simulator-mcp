@@ -798,6 +798,300 @@ if (!isToolFiltered("stop_recording")) {
   );
 }
 
+if (!isToolFiltered("app_launch")) {
+  server.tool(
+    "app_launch",
+    "Launch an app on the iOS Simulator",
+    {
+      udid: z
+        .string()
+        .regex(UDID_REGEX)
+        .optional()
+        .describe("Udid of target, can also be set with the IDB_UDID env var"),
+      bundle_id: z
+        .string()
+        .min(1)
+        .describe("Bundle identifier of the app to launch (e.g., com.apple.mobilesafari)"),
+      wait_for_debugger: z
+        .boolean()
+        .optional()
+        .describe("Wait for debugger to attach before launching"),
+    },
+    async ({ udid, bundle_id, wait_for_debugger }) => {
+      try {
+        const actualUdid = await getBootedDeviceId(udid);
+
+        const { stdout, stderr } = await run("xcrun", [
+          "simctl",
+          "launch",
+          ...(wait_for_debugger ? ["--wait-for-debugger"] : []),
+          actualUdid,
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          bundle_id,
+        ]);
+
+        return {
+          isError: false,
+          content: [
+            {
+              type: "text",
+              text: stdout || `Successfully launched app: ${bundle_id}`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: errorWithTroubleshooting(
+                `Error launching app ${bundle_id}: ${toError(error).message}`
+              ),
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
+if (!isToolFiltered("app_terminate")) {
+  server.tool(
+    "app_terminate",
+    "Terminate an app on the iOS Simulator",
+    {
+      udid: z
+        .string()
+        .regex(UDID_REGEX)
+        .optional()
+        .describe("Udid of target, can also be set with the IDB_UDID env var"),
+      bundle_id: z
+        .string()
+        .min(1)
+        .describe("Bundle identifier of the app to terminate (e.g., com.apple.mobilesafari)"),
+    },
+    async ({ udid, bundle_id }) => {
+      try {
+        const actualUdid = await getBootedDeviceId(udid);
+
+        const { stdout, stderr } = await run("xcrun", [
+          "simctl",
+          "terminate",
+          actualUdid,
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          bundle_id,
+        ]);
+
+        return {
+          isError: false,
+          content: [
+            {
+              type: "text",
+              text: stdout || `Successfully terminated app: ${bundle_id}`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: errorWithTroubleshooting(
+                `Error terminating app ${bundle_id}: ${toError(error).message}`
+              ),
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
+if (!isToolFiltered("app_list")) {
+  server.tool(
+    "app_list",
+    "List installed apps on the iOS Simulator",
+    {
+      udid: z
+        .string()
+        .regex(UDID_REGEX)
+        .optional()
+        .describe("Udid of target, can also be set with the IDB_UDID env var"),
+      app_type: z
+        .enum(["user", "system", "all"])
+        .optional()
+        .default("user")
+        .describe("Type of apps to list: user (default), system, or all"),
+    },
+    async ({ udid, app_type }) => {
+      try {
+        const actualUdid = await getBootedDeviceId(udid);
+
+        // Use idb to list apps as it provides better formatted output
+        const args = ["list-apps", "--udid", actualUdid, "--json"];
+
+        // Add app type filter if specified
+        if (app_type === "system") {
+          args.push("--system");
+        } else if (app_type === "all") {
+          // idb lists both by default when no filter is specified
+        } else {
+          // Default to user apps only
+          args.push("--user");
+        }
+
+        const { stdout, stderr } = await run("idb", args);
+
+        if (stderr) {
+          throw new Error(stderr);
+        }
+
+        return {
+          isError: false,
+          content: [
+            {
+              type: "text",
+              text: stdout,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: errorWithTroubleshooting(
+                `Error listing apps: ${toError(error).message}`
+              ),
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
+if (!isToolFiltered("app_install")) {
+  server.tool(
+    "app_install",
+    "Install an app on the iOS Simulator from a .app bundle or .ipa file",
+    {
+      udid: z
+        .string()
+        .regex(UDID_REGEX)
+        .optional()
+        .describe("Udid of target, can also be set with the IDB_UDID env var"),
+      app_path: z
+        .string()
+        .min(1)
+        .describe("Path to the .app bundle or .ipa file to install"),
+    },
+    async ({ udid, app_path }) => {
+      try {
+        const actualUdid = await getBootedDeviceId(udid);
+
+        const { stdout, stderr } = await run("xcrun", [
+          "simctl",
+          "install",
+          actualUdid,
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          app_path,
+        ]);
+
+        return {
+          isError: false,
+          content: [
+            {
+              type: "text",
+              text: stdout || `Successfully installed app from: ${app_path}`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: errorWithTroubleshooting(
+                `Error installing app from ${app_path}: ${toError(error).message}`
+              ),
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
+if (!isToolFiltered("app_uninstall")) {
+  server.tool(
+    "app_uninstall",
+    "Uninstall an app from the iOS Simulator",
+    {
+      udid: z
+        .string()
+        .regex(UDID_REGEX)
+        .optional()
+        .describe("Udid of target, can also be set with the IDB_UDID env var"),
+      bundle_id: z
+        .string()
+        .min(1)
+        .describe("Bundle identifier of the app to uninstall (e.g., com.example.myapp)"),
+    },
+    async ({ udid, bundle_id }) => {
+      try {
+        const actualUdid = await getBootedDeviceId(udid);
+
+        const { stdout, stderr } = await run("xcrun", [
+          "simctl",
+          "uninstall",
+          actualUdid,
+          // When passing user-provided values to a command, it's crucial to use `--`
+          // to separate the command's options from positional arguments.
+          // This prevents the shell from misinterpreting the arguments as options.
+          "--",
+          bundle_id,
+        ]);
+
+        return {
+          isError: false,
+          content: [
+            {
+              type: "text",
+              text: stdout || `Successfully uninstalled app: ${bundle_id}`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: errorWithTroubleshooting(
+                `Error uninstalling app ${bundle_id}: ${toError(error).message}`
+              ),
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
