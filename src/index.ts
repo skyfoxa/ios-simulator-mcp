@@ -602,8 +602,8 @@ if (!isToolFiltered("screenshot")) {
         const actualUdid = await getBootedDeviceId(udid);
         const absolutePath = ensureAbsolutePath(output_path);
 
-        // command is weird, it responds with stderr on success and stdout is blank
-        const { stderr: stdout } = await run("xcrun", [
+        // simctl screenshot outputs success messages to stderr, stdout is typically empty
+        const { stdout, stderr } = await run("xcrun", [
           "simctl",
           "io",
           actualUdid,
@@ -618,9 +618,12 @@ if (!isToolFiltered("screenshot")) {
           absolutePath,
         ]);
 
-        // throw if we don't get the expected success message
-        if (stdout && !stdout.includes("Wrote screenshot to")) {
-          throw new Error(stdout);
+        // Check stderr for success message (simctl outputs there), treat stdout as error if present
+        if (stdout) {
+          throw new Error(`Unexpected stdout: ${stdout}`);
+        }
+        if (!stderr || !stderr.includes("Wrote screenshot to")) {
+          throw new Error(stderr || "Unknown error taking screenshot");
         }
 
         return {
@@ -628,7 +631,7 @@ if (!isToolFiltered("screenshot")) {
           content: [
             {
               type: "text",
-              text: stdout,
+              text: stderr,
             },
           ],
         };
