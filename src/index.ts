@@ -878,10 +878,6 @@ if (!isToolFiltered("app_terminate")) {
           "simctl",
           "terminate",
           actualUdid,
-          // When passing user-provided values to a command, it's crucial to use `--`
-          // to separate the command's options from positional arguments.
-          // This prevents the shell from misinterpreting the arguments as options.
-          "--",
           bundle_id,
         ]);
 
@@ -1015,10 +1011,6 @@ if (!isToolFiltered("app_install")) {
           "simctl",
           "install",
           actualUdid,
-          // When passing user-provided values to a command, it's crucial to use `--`
-          // to separate the command's options from positional arguments.
-          // This prevents the shell from misinterpreting the arguments as options.
-          "--",
           app_path,
         ]);
 
@@ -1071,10 +1063,6 @@ if (!isToolFiltered("app_uninstall")) {
           "simctl",
           "uninstall",
           actualUdid,
-          // When passing user-provided values to a command, it's crucial to use `--`
-          // to separate the command's options from positional arguments.
-          // This prevents the shell from misinterpreting the arguments as options.
-          "--",
           bundle_id,
         ]);
 
