@@ -823,10 +823,6 @@ if (!isToolFiltered("app_launch")) {
           "launch",
           ...(wait_for_debugger ? ["--wait-for-debugger"] : []),
           actualUdid,
-          // When passing user-provided values to a command, it's crucial to use `--`
-          // to separate the command's options from positional arguments.
-          // This prevents the shell from misinterpreting the arguments as options.
-          "--",
           bundle_id,
         ]);
 
