@@ -931,34 +931,50 @@ if (!isToolFiltered("app_list")) {
       try {
         const actualUdid = await getBootedDeviceId(udid);
 
-        // Use idb to list apps as it provides better formatted output
-        const args = ["list-apps", "--udid", actualUdid, "--json"];
+        if (app_type === "system" || app_type === "all") {
+          // Use simctl for system/all apps as idb doesn't support filtering
+          const { stdout, stderr } = await run("xcrun", [
+            "simctl",
+            "listapps",
+            actualUdid,
+          ]);
 
-        // Add app type filter if specified
-        if (app_type === "system") {
-          args.push("--system");
-        } else if (app_type === "all") {
-          // idb lists both by default when no filter is specified
+          if (stderr) {
+            throw new Error(stderr);
+          }
+
+          return {
+            isError: false,
+            content: [
+              {
+                type: "text",
+                text: stdout,
+              },
+            ],
+          };
         } else {
-          // Default to user apps only
-          args.push("--user");
+          // Use idb for user apps (default behavior)
+          const { stdout, stderr } = await run("idb", [
+            "list-apps",
+            "--udid",
+            actualUdid,
+            "--json",
+          ]);
+
+          if (stderr) {
+            throw new Error(stderr);
+          }
+
+          return {
+            isError: false,
+            content: [
+              {
+                type: "text",
+                text: stdout,
+              },
+            ],
+          };
         }
-
-        const { stdout, stderr } = await run("idb", args);
-
-        if (stderr) {
-          throw new Error(stderr);
-        }
-
-        return {
-          isError: false,
-          content: [
-            {
-              type: "text",
-              text: stdout,
-            },
-          ],
-        };
       } catch (error) {
         return {
           isError: true,
