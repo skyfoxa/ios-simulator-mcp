@@ -1092,6 +1092,61 @@ if (!isToolFiltered("app_uninstall")) {
   );
 }
 
+if (!isToolFiltered("app_logs")) {
+  server.tool(
+    "app_logs",
+    "Get console logs for a specific app on the iOS Simulator",
+    {
+      udid: z
+        .string()
+        .regex(UDID_REGEX)
+        .optional()
+        .describe("Udid of target, can also be set with the IDB_UDID env var"),
+      bundle_id: z
+        .string()
+        .min(1)
+        .describe("Bundle identifier of the app to get logs for (e.g., com.pura.staging)"),
+    },
+    async ({ udid, bundle_id }) => {
+      try {
+        const actualUdid = await getBootedDeviceId(udid);
+
+        const { stdout, stderr } = await run("xcrun", [
+          "simctl",
+          "spawn",
+          actualUdid,
+          "log",
+          "show",
+          "--predicate",
+          `subsystem CONTAINS "${bundle_id}"`,
+        ]);
+
+        return {
+          isError: false,
+          content: [
+            {
+              type: "text",
+              text: stdout || `No logs found for app: ${bundle_id}`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: errorWithTroubleshooting(
+                `Error getting logs for app ${bundle_id}: ${toError(error).message}`
+              ),
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
